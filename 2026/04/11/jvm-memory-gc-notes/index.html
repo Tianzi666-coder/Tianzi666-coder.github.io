@@ -30,14 +30,14 @@
 <meta property="article:published_time" content="2026-04-11T12:00:00.000Z">
 <meta property="article:modified_time" content="2026-10-20T10:52:29.223Z">
 <meta property="article:author" content="Tianzi666-coder">
-<meta property="article:tag" content="面试">
 <meta property="article:tag" content="JVM">
 <meta property="article:tag" content="垃圾回收">
+<meta property="article:tag" content="面试">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://tianzi666-coder.github.io/img/covers/jvm-memory-gc-notes.svg"><meta name="twitter:title" content="JVM 内存结构与垃圾回收：一次讲清楚">
   
   
-  <meta name="keywords" content="面试,JVM,垃圾回收">
+  <meta name="keywords" content="JVM,垃圾回收,面试">
 
   <!-- feed -->
   
@@ -50,7 +50,7 @@
 
   
 
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-04-11T20:00:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-04-11T20:00:00+08:00","description":"运行时数据区\n\n\n区域\n线程\n说明\n\n\n\n程序计数器\n私有\n当前字节码行号，唯一不会 OOM 的区域\n\n\n虚拟机栈\n私有\n每个方法一个栈帧（局部变量表、操作数栈）\n\n\n本地方法栈\n私有\nnative 方法\n\n\n堆\n共享\n对象实例，GC 主战场\n\n\n方法区（元空间）\n共享\n类元信息、常量、静态变量，JDK 8 后移出堆\n\n","headline":"JVM 内存结构与垃圾回收：一次讲清楚","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/04/11/jvm-memory-gc-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/04/11/jvm-memory-gc-notes/","keywords":"面试, JVM, 垃圾回收","thumbnailUrl":"/img/covers/jvm-memory-gc-notes.svg","image":["/img/covers/jvm-memory-gc-notes.svg"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-04-11T20:00:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-04-11T20:00:00+08:00","description":"运行时数据区\n\n\n区域\n线程\n说明\n\n\n\n程序计数器\n私有\n当前字节码行号，唯一不会 OOM 的区域\n\n\n虚拟机栈\n私有\n每个方法一个栈帧（局部变量表、操作数栈）\n\n\n本地方法栈\n私有\nnative 方法\n\n\n堆\n共享\n对象实例，GC 主战场\n\n\n方法区（元空间）\n共享\n类元信息、常量、静态变量，JDK 8 后移出堆\n\n","headline":"JVM 内存结构与垃圾回收：一次讲清楚","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/04/11/jvm-memory-gc-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/04/11/jvm-memory-gc-notes/","keywords":"JVM, 垃圾回收, 面试","thumbnailUrl":"/img/covers/jvm-memory-gc-notes.svg","image":["/img/covers/jvm-memory-gc-notes.svg"]}</script>
   
 
   <!-- icons.yml 驱动的 CSS 装饰图标 -->
@@ -93,24 +93,6 @@
   <div class="widget-body"><div class="ui-collection" data-layout="list" data-variant="nav" data-density="compact">
   
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/10/05/docker-deploy-notes/" title="Docker 部署 Spring Boot 微服务（实战流程）">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Docker 部署 Spring Boot 微服务（实战流程）</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-    
 <a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/09/20/java-interview-quick-reference/" title="Java 后端面试题速查（持续更新）">
   
   
@@ -129,13 +111,13 @@
 
   
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/09/05/nacos-registry-config-notes/" title="Nacos：注册中心与配置中心的实战用法">
+<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/08/22/gateway-jwt-auth-notes/" title="微服务网关统一鉴权：JWT + 全局过滤器设计">
   
   
   
     <span class="ui-collection__content">
       
-      <span class="ui-collection__title">Nacos：注册中心与配置中心的实战用法</span>
+      <span class="ui-collection__title">微服务网关统一鉴权：JWT + 全局过滤器设计</span>
       
       
     </span>
@@ -147,13 +129,31 @@
 
   
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/08/22/gateway-jwt-auth-notes/" title="微服务网关统一鉴权：JWT + 全局过滤器设计">
+<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/10/05/docker-deploy-notes/" title="Docker 部署 Spring Boot 微服务（实战流程）">
   
   
   
     <span class="ui-collection__content">
       
-      <span class="ui-collection__title">微服务网关统一鉴权：JWT + 全局过滤器设计</span>
+      <span class="ui-collection__title">Docker 部署 Spring Boot 微服务（实战流程）</span>
+      
+      
+    </span>
+  
+  
+  
+  
+</a>
+
+  
+    
+<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/09/05/nacos-registry-config-notes/" title="Nacos：注册中心与配置中心的实战用法">
+  
+  
+  
+    <span class="ui-collection__content">
+      
+      <span class="ui-collection__title">Nacos：注册中心与配置中心的实战用法</span>
       
       
     </span>
@@ -391,7 +391,7 @@
 <p><strong>面试常问</strong>：为什么新生代用复制算法？（存活对象少，复制成本低，且没有内存碎片）</p>
 </article>
 
-<div class="article-tags slide-up"><a class="tag" href="/tags/%E9%9D%A2%E8%AF%95/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>面试</a><a class="tag" href="/tags/JVM/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>JVM</a><a class="tag" href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>垃圾回收</a></div>
+<div class="article-tags slide-up"><a class="tag" href="/tags/JVM/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>JVM</a><a class="tag" href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>垃圾回收</a><a class="tag" href="/tags/%E9%9D%A2%E8%AF%95/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>面试</a></div>
 
 <div class="article-footer slide-up">
     <section id="license">
