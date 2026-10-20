@@ -30,15 +30,15 @@
 <meta property="article:published_time" content="2026-08-22T12:45:00.000Z">
 <meta property="article:modified_time" content="2026-10-20T10:52:29.266Z">
 <meta property="article:author" content="Tianzi666-coder">
-<meta property="article:tag" content="微服务">
 <meta property="article:tag" content="Spring Cloud">
 <meta property="article:tag" content="网关">
 <meta property="article:tag" content="JWT">
+<meta property="article:tag" content="微服务">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://tianzi666-coder.github.io/img/covers/gateway-jwt-auth-notes.svg"><meta name="twitter:title" content="微服务网关统一鉴权：JWT + 全局过滤器设计">
   
   
-  <meta name="keywords" content="微服务,Spring Cloud,网关,JWT">
+  <meta name="keywords" content="Spring Cloud,网关,JWT,微服务">
 
   <!-- feed -->
   
@@ -51,7 +51,7 @@
 
   
 
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-08-22T20:45:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-08-22T20:45:00+08:00","description":"前端只认一个入口（网关），鉴权也只在网关做一次，下游服务不再重复校验。","headline":"微服务网关统一鉴权：JWT + 全局过滤器设计","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/08/22/gateway-jwt-auth-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/08/22/gateway-jwt-auth-notes/","keywords":"微服务, Spring Cloud, 网关, JWT","thumbnailUrl":"/img/covers/gateway-jwt-auth-notes.svg","image":["/img/covers/gateway-jwt-auth-notes.svg"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-08-22T20:45:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-08-22T20:45:00+08:00","description":"前端只认一个入口（网关），鉴权也只在网关做一次，下游服务不再重复校验。","headline":"微服务网关统一鉴权：JWT + 全局过滤器设计","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/08/22/gateway-jwt-auth-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/08/22/gateway-jwt-auth-notes/","keywords":"Spring Cloud, 网关, JWT, 微服务","thumbnailUrl":"/img/covers/gateway-jwt-auth-notes.svg","image":["/img/covers/gateway-jwt-auth-notes.svg"]}</script>
   
 
   <!-- icons.yml 驱动的 CSS 装饰图标 -->
@@ -66,7 +66,7 @@
 }</style>
   
 </head>
-<body><div id="l_cover"></div><div class="l_body content" id="start" layout="post" type="tech" ><aside class="l_left leftbar-card" data-ui-surface="card"><div class="sidebg"></div><div class="leftbar-container">
+<body><div class="sitebg"><div class="siteblur"></div></div><div id="l_cover"></div><div class="l_body content" id="start" layout="post" type="tech" ><aside class="l_left" data-ui-surface="glass"><div class="sidebg"></div><div class="leftbar-container">
 
 
 
@@ -336,7 +336,7 @@
 </ul>
 </article>
 
-<div class="article-tags slide-up"><a class="tag" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>微服务</a><a class="tag" href="/tags/Spring-Cloud/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>Spring Cloud</a><a class="tag" href="/tags/%E7%BD%91%E5%85%B3/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>网关</a><a class="tag" href="/tags/JWT/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>JWT</a></div>
+<div class="article-tags slide-up"><a class="tag" href="/tags/Spring-Cloud/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>Spring Cloud</a><a class="tag" href="/tags/%E7%BD%91%E5%85%B3/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>网关</a><a class="tag" href="/tags/JWT/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>JWT</a><a class="tag" href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>微服务</a></div>
 
 <div class="article-footer slide-up">
     <section id="license">
