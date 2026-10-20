@@ -1,325 +1,222 @@
+<!DOCTYPE html><html lang="zh-CN" data-theme="light"><head><meta charset="UTF-8"><meta http-equiv="X-UA-Compatible" content="IE=edge"><meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"><title>Spring IOC 与 AOP：原理与常见坑 | 田子誉的博客</title><meta name="keywords" content="面试,Spring,IOC,AOP"><meta name="author" content="Tianzi666-coder"><meta name="copyright" content="Tianzi666-coder"><meta name="format-detection" content="telephone=no"><meta name="theme-color" content="#f7f9fe"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-touch-fullscreen" content="yes"><meta name="apple-mobile-web-app-title" content="Spring IOC 与 AOP：原理与常见坑"><meta name="application-name" content="Spring IOC 与 AOP：原理与常见坑"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="#f7f9fe"><meta property="og:type" content="article"><meta property="og:title" content="Spring IOC 与 AOP：原理与常见坑"><meta property="og:url" content="https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/index.html"><meta property="og:site_name" content="田子誉的博客"><meta property="og:description" content="Bean 的生命周期、循环依赖为什么用三级缓存、AOP 的两种代理方式，以及自调用失效的根因。"><meta property="og:locale" content="zh-CN"><meta property="og:image" content="https://tianzi666-coder.github.io/img/covers/spring-ioc-aop-notes.svg"><meta property="article:author" content="Tianzi666-coder"><meta property="article:tag" content="Java,Spring Boot,Spring Cloud,微服务,后端开发,个人博客"><meta name="twitter:card" content="summary"><meta name="twitter:image" content="https://tianzi666-coder.github.io/img/covers/spring-ioc-aop-notes.svg"><meta name="description" content="Bean 的生命周期、循环依赖为什么用三级缓存、AOP 的两种代理方式，以及自调用失效的根因。"><link rel="shortcut icon" href="/favicon.ico"><link rel="canonical" href="https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/"><link rel="preconnect" href="//cdn.cbd.int"/><meta name="google-site-verification" content="xxx"/><meta name="baidu-site-verification" content="code-xxx"/><meta name="msvalidate.01" content="xxx"/><link rel="stylesheet" href="/css/index.css"><link rel="stylesheet" href="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.css" media="print" onload="this.media='all'"><link rel="stylesheet" href="https://cdn.cbd.int/@fancyapps/ui@6.1.6/dist/fancybox/fancybox.css" media="print" onload="this.media='all'"><script>const GLOBAL_CONFIG = {
+  linkPageTop: undefined,
+  peoplecanvas: undefined,
+  postHeadAiDescription: {"enable":true,"gptName":"AnZhiYu","mode":"local","switchBtn":false,"btnLink":"https://afdian.net/item/886a79d4db6711eda42a52540025c377","randomNum":3,"basicWordCount":1000,"key":"xxxx","Referer":"https://xx.xx/"},
+  diytitle: {"enable":true,"leaveTitle":"w(ﾟДﾟ)w 不要走！再看看嘛！","backTitle":"♪(^∇^*)欢迎肥来！"},
+  LA51: undefined,
+  greetingBox: undefined,
+  twikooEnvId: '',
+  commentBarrageConfig:undefined,
+  music_page_default: "nav_music",
+  root: '/',
+  preloader: {"source":3},
+  friends_vue_info: undefined,
+  navMusic: true,
+  mainTone: undefined,
+  authorStatus: undefined,
+  algolia: undefined,
+  localSearch: undefined,
+  translate: {"defaultEncoding":2,"translateDelay":0,"msgToTraditionalChinese":"繁","msgToSimplifiedChinese":"简","rightMenuMsgToTraditionalChinese":"转为繁体","rightMenuMsgToSimplifiedChinese":"转为简体"},
+  noticeOutdate: undefined,
+  highlight: {"plugin":"highlight.js","highlightCopy":true,"highlightLang":true,"highlightHeightLimit":330},
+  copy: {
+    success: '复制成功',
+    error: '复制错误',
+    noSupport: '浏览器不支持'
+  },
+  relativeDate: {
+    homepage: false,
+    simplehomepage: true,
+    post: false
+  },
+  runtime: '天',
+  date_suffix: {
+    just: '刚刚',
+    min: '分钟前',
+    hour: '小时前',
+    day: '天前',
+    month: '个月前'
+  },
+  copyright: {"copy":true,"copyrightEbable":false,"limitCount":50,"languages":{"author":"作者: Tianzi666-coder","link":"链接: ","source":"来源: 田子誉的博客","info":"著作权归作者所有。商业转载请联系作者获得授权，非商业转载请注明出处。","copySuccess":"复制成功，复制和转载请标注本文地址"}},
+  lightbox: 'fancybox',
+  Snackbar: {"chs_to_cht":"你已切换为繁体","cht_to_chs":"你已切换为简体","day_to_night":"你已切换为深色模式","night_to_day":"你已切换为浅色模式","bgLight":"#425AEF","bgDark":"#1f1f1f","position":"right"},
+  source: {
+    justifiedGallery: {
+      js: 'https://cdn.cbd.int/flickr-justified-gallery@2.2.0/dist/fjGallery.min.js',
+      css: 'https://cdn.cbd.int/flickr-justified-gallery@2.2.0/dist/fjGallery.css'
+    }
+  },
+  isPhotoFigcaption: false,
+  islazyload: true,
+  isAnchor: false,
+  shortcutKey: undefined,
+  autoDarkmode: true
+}</script><script id="config-diff">var GLOBAL_CONFIG_SITE = {
+  configTitle: '田子誉的博客',
+  title: 'Spring IOC 与 AOP：原理与常见坑',
+  postAI: '',
+  pageFillDescription: 'IOC 到底解决了什么, Bean 生命周期（背这个顺序）, 循环依赖与三级缓存, AOP 的两种代理, 常见坑, 面试一句话到底解决了什么控制反转对象的创建和依赖注入交给容器好处解耦便于替换实现面向接口统一管理生命周期生命周期背这个顺序实例化反射调用构造器属性填充依赖注入回调代理就在这生成使用循环依赖与三级缓存缓存存什么一级完整二级提前暴露的半成品三级生成早期引用的可能返回代理为什么需要三级因为代理要到初始化后才生成第三级缓存放的是工厂在需要时能提前生产代理对象构造器注入的循环依赖无法解决对象还没实例化出来的两种代理方式条件动态代理目标类实现了接口基于没有接口继承子类所以类和方法代理不了起默认即默认常见坑同类自调用失效不走代理全废方法加注解无效代理不了方法返回值必须是或面试一句话是把交给容器是用代理在方法前后织入逻辑两者共同的实现基础都是反射动态代理',
+  isPost: true,
+  isHome: false,
+  isHighlightShrink: false,
+  isToc: true,
+  postUpdate: '2026-10-20 18:52:29',
+  postMainColor: '',
+}</script><noscript><style type="text/css">
+  #nav {
+    opacity: 1
+  }
+  .justified-gallery img {
+    opacity: 1
+  }
 
-<!DOCTYPE html><html lang="zh-CN" data-theme="dark">
-
-<head>
-  <meta charset="utf-8">
-  <meta name="hexo-theme" content="https://github.com/xaoxuu/hexo-theme-stellar/tree/1.44.0" theme-name="Stellar" theme-version="1.44.0">
-  
-  
-  <meta name="generator" content="Hexo 7.3.0">
-  <meta http-equiv='x-dns-prefetch-control' content='on' />
-  <link rel="preconnect" href="https://gcore.jsdelivr.net" crossorigin><link rel="preconnect" href="https://unpkg.com" crossorigin><link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin><link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
-  <meta name="renderer" content="webkit">
-  <meta name="force-rendering" content="webkit">
-  <meta http-equiv="X-UA-Compatible" content="IE=Edge,chrome=1">
-  <meta name="HandheldFriendly" content="True" >
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
-  <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#000">
-  <meta name="theme-color" content="#f9fafb">
-  <title>Spring IOC 与 AOP：原理与常见坑 - 田子誉的博客</title>
-
-  <meta name="description" content="Bean 的生命周期、循环依赖为什么用三级缓存、AOP 的两种代理方式，以及自调用失效的根因。">
-<meta property="og:type" content="article">
-<meta property="og:title" content="Spring IOC 与 AOP：原理与常见坑">
-<meta property="og:url" content="https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/">
-<meta property="og:site_name" content="田子誉的博客">
-<meta property="og:description" content="Bean 的生命周期、循环依赖为什么用三级缓存、AOP 的两种代理方式，以及自调用失效的根因。">
-<meta property="og:locale" content="zh_CN">
-<meta property="og:image" content="https://tianzi666-coder.github.io/img/covers/spring-ioc-aop-notes.svg">
-<meta property="article:published_time" content="2026-07-04T12:50:00.000Z">
-<meta property="article:modified_time" content="2026-10-20T10:52:29.250Z">
-<meta property="article:author" content="Tianzi666-coder">
-<meta property="article:tag" content="面试">
-<meta property="article:tag" content="Spring">
-<meta property="article:tag" content="IOC">
-<meta property="article:tag" content="AOP">
-<meta name="twitter:card" content="summary_large_image">
-<meta name="twitter:image" content="https://tianzi666-coder.github.io/img/covers/spring-ioc-aop-notes.svg"><meta name="twitter:title" content="Spring IOC 与 AOP：原理与常见坑">
-  
-  
-  <meta name="keywords" content="面试,Spring,IOC,AOP">
-
-  <!-- feed -->
-  
-
-  <link rel="preload" href="/css/main.css?v=1.44.0" as="style">
-  <link rel="stylesheet" href="/css/main.css?v=1.44.0">
-
-
-  
-
-  
-
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-07-04T20:50:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-07-04T20:50:00+08:00","description":"IOC 到底解决了什么控制反转 &#x3D; 对象的创建和依赖注入交给容器。好处：解耦、便于替换实现（面向接口）、统一管理生命周期。","headline":"Spring IOC 与 AOP：原理与常见坑","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/","keywords":"面试, Spring, IOC, AOP","thumbnailUrl":"/img/covers/spring-ioc-aop-notes.svg","image":["/img/covers/spring-ioc-aop-notes.svg"]}</script>
-  
-
-  <!-- icons.yml 驱动的 CSS 装饰图标 -->
-  
-  
-  <style>:root {
-  --icon-h3-left: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2024%2024%22%3E%3C!--%20Icon%20from%20Solar%20by%20480%20Design%20-%20https%3A%2F%2Fcreativecommons.org%2Flicenses%2Fby%2F4.0%2F%20--%3E%3Cpath%20fill%3D%22currentColor%22%20d%3D%22M17.75%2019a.75.75%200%200%201-1.32.488l-6-7a.75.75%200%200%201%200-.976l6-7A.75.75%200%200%201%2017.75%205z%22%20opacity%3D%22.5%22%2F%3E%3Cpath%20fill%3D%22currentColor%22%20fill-rule%3D%22evenodd%22%20d%3D%22M13.488%2019.57a.75.75%200%200%200%20.081-1.058L7.988%2012l5.581-6.512a.75.75%200%201%200-1.138-.976l-6%207a.75.75%200%200%200%200%20.976l6%207a.75.75%200%200%200%201.057.082%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E");
-  --icon-h3-right: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2024%2024%22%3E%3C!--%20Icon%20from%20Solar%20by%20480%20Design%20-%20https%3A%2F%2Fcreativecommons.org%2Flicenses%2Fby%2F4.0%2F%20--%3E%3Cpath%20fill%3D%22currentColor%22%20d%3D%22M6.25%2019a.75.75%200%200%200%201.32.488l6-7a.75.75%200%200%200%200-.976l-6-7A.75.75%200%200%200%206.25%205z%22%20opacity%3D%22.5%22%2F%3E%3Cpath%20fill%3D%22currentColor%22%20fill-rule%3D%22evenodd%22%20d%3D%22M10.512%2019.57a.75.75%200%200%201-.081-1.058L16.012%2012l-5.581-6.512a.75.75%200%201%201%201.139-.976l6%207a.75.75%200%200%201%200%20.976l-6%207a.75.75%200%200%201-1.058.082%22%20clip-rule%3D%22evenodd%22%2F%3E%3C%2Fsvg%3E");
-  --icon-quote-left: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2024%2024%22%3E%3C!--%20Icon%20from%20BoxIcons%20Solid%20by%20Atisa%20-%20https%3A%2F%2Fcreativecommons.org%2Flicenses%2Fby%2F4.0%2F%20--%3E%3Cpath%20fill%3D%22currentColor%22%20d%3D%22M3.691%206.292C5.094%204.771%207.217%204%2010%204h1v2.819l-.804.161c-1.37.274-2.323.813-2.833%201.604A2.9%202.9%200%200%200%206.925%2010H10a1%201%200%200%201%201%201v7c0%201.103-.897%202-2%202H3a1%201%200%200%201-1-1v-5l.003-2.919c-.009-.111-.199-2.741%201.688-4.789M20%2020h-6a1%201%200%200%201-1-1v-5l.003-2.919c-.009-.111-.199-2.741%201.688-4.789C16.094%204.771%2018.217%204%2021%204h1v2.819l-.804.161c-1.37.274-2.323.813-2.833%201.604A2.9%202.9%200%200%200%2017.925%2010H21a1%201%200%200%201%201%201v7c0%201.103-.897%202-2%202%22%2F%3E%3C%2Fsvg%3E");
-  --icon-quote-right: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2232%22%20height%3D%2232%22%20viewBox%3D%220%200%2024%2024%22%3E%3C!--%20Icon%20from%20BoxIcons%20Solid%20by%20Atisa%20-%20https%3A%2F%2Fcreativecommons.org%2Flicenses%2Fby%2F4.0%2F%20--%3E%3Cpath%20fill%3D%22currentColor%22%20d%3D%22M20.309%2017.708C22.196%2015.66%2022.006%2013.03%2022%2013V5a1%201%200%200%200-1-1h-6c-1.103%200-2%20.897-2%202v7a1%201%200%200%200%201%201h3.078a2.9%202.9%200%200%201-.429%201.396c-.508.801-1.465%201.348-2.846%201.624l-.803.16V20h1c2.783%200%204.906-.771%206.309-2.292m-11.007%200C11.19%2015.66%2010.999%2013.03%2010.993%2013V5a1%201%200%200%200-1-1h-6c-1.103%200-2%20.897-2%202v7a1%201%200%200%200%201%201h3.078a2.9%202.9%200%200%201-.429%201.396c-.508.801-1.465%201.348-2.846%201.624l-.803.16V20h1c2.783%200%204.906-.771%206.309-2.292%22%2F%3E%3C%2Fsvg%3E");
-  --icon-loading: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%221em%22%20height%3D%221em%22%20viewBox%3D%220%200%2024%2024%22%3E%3Ccircle%20cx%3D%2218%22%20cy%3D%2212%22%20r%3D%220%22%20fill%3D%22currentColor%22%3E%3Canimate%20attributeName%3D%22r%22%20begin%3D%22.67%22%20calcMode%3D%22spline%22%20dur%3D%221.5s%22%20keySplines%3D%220.2%200.2%200.4%200.8%3B0.2%200.2%200.4%200.8%3B0.2%200.2%200.4%200.8%22%20repeatCount%3D%22indefinite%22%20values%3D%220%3B2%3B0%3B0%22%2F%3E%3C%2Fcircle%3E%3Ccircle%20cx%3D%2212%22%20cy%3D%2212%22%20r%3D%220%22%20fill%3D%22currentColor%22%3E%3Canimate%20attributeName%3D%22r%22%20begin%3D%22.33%22%20calcMode%3D%22spline%22%20dur%3D%221.5s%22%20keySplines%3D%220.2%200.2%200.4%200.8%3B0.2%200.2%200.4%200.8%3B0.2%200.2%200.4%200.8%22%20repeatCount%3D%22indefinite%22%20values%3D%220%3B2%3B0%3B0%22%2F%3E%3C%2Fcircle%3E%3Ccircle%20cx%3D%226%22%20cy%3D%2212%22%20r%3D%220%22%20fill%3D%22currentColor%22%3E%3Canimate%20attributeName%3D%22r%22%20begin%3D%220%22%20calcMode%3D%22spline%22%20dur%3D%221.5s%22%20keySplines%3D%220.2%200.2%200.4%200.8%3B0.2%200.2%200.4%200.8%3B0.2%200.2%200.4%200.8%22%20repeatCount%3D%22indefinite%22%20values%3D%220%3B2%3B0%3B0%22%2F%3E%3C%2Fcircle%3E%3C%2Fsvg%3E");
-}</style>
-  
-</head>
-<body><div class="sitebg"><div class="siteblur"></div></div><div id="l_cover"></div><div class="l_body content" id="start" layout="post" type="tech" ><aside class="l_left leftbar-card" data-ui-surface="card"><div class="sidebg"></div><div class="leftbar-container">
-
-
-
-<header class="header"><div class="logo-wrap"><a class="avatar" href="/about/"><div class="bg"></div><img no-lazy class="avatar" src="https://avatars.githubusercontent.com/u/344862469?v=4" onerror="javascript:this.classList.add('error');this.src='https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/image/2659360.svg';"></a><a class="title" href="/"><div class="main">田子誉的博客</div><div class="sub cap">后端学习笔记 · Spring Cloud · 分布式 · 云原生</div></a></div></header>
-
-
-<div class="search-wrapper" id="search-wrapper"><div class="search-form" role="search"><label class="search-button" for="search-input" aria-hidden="true"><svg t="1705074644177" viewBox="0 0 1025 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="1560" width="200" height="200"><path d="M1008.839137 935.96571L792.364903 719.491476a56.783488 56.783488 0 0 0-80.152866 0 358.53545 358.53545 0 1 1 100.857314-335.166073 362.840335 362.840335 0 0 1-3.689902 170.145468 51.248635 51.248635 0 1 0 99.217358 26.444296 462.057693 462.057693 0 1 0-158.255785 242.303546l185.930047 185.725053a51.248635 51.248635 0 0 0 72.568068 0 51.248635 51.248635 0 0 0 0-72.978056z" p-id="1561"></path><path d="M616.479587 615.969233a50.428657 50.428657 0 0 0-61.498362-5.534852 174.655348 174.655348 0 0 1-177.525271 3.484907 49.403684 49.403684 0 0 0-58.833433 6.76482l-3.074918 2.869923a49.403684 49.403684 0 0 0 8.609771 78.10292 277.767601 277.767601 0 0 0 286.992355-5.739847 49.403684 49.403684 0 0 0 8.404776-76.667958z" p-id="1562"></path></svg></label><input type="search" class="search-input" id="search-input" aria-label="站内搜索" placeholder="站内搜索"></div><div id="search-result"></div><div class="search-no-result">没有找到内容！</div></div>
-
-<div class="widgets">
-<svg class="grad-def" width="0" height="0" aria-hidden="true" focusable="false"><defs><linearGradient id="leftbar-active-icon-grad" x1="75%" y1="6.7%" x2="6.7%" y2="125%"><stop offset="20%" style="stop-color:var(--item-theme-light)"/><stop offset="60%" style="stop-color:var(--item-theme)"/></linearGradient></defs></svg>
-<div class="nav-area">
-
-
-</div>
-
-
-
-<widget class="widget-wrapper slide-up recent-widget">
-  
-    <div class="widget-header dis-select">
-      <span class="name">最近更新</span>
+  #recent-posts time,
+  #post-meta time {
+    display: inline !important
+  }
+</style></noscript><script>(win=>{
+      win.saveToLocal = {
+        set: (key, value, ttl) => {
+          if (ttl === 0) return
+          const now = Date.now()
+          const expiry = now + ttl * 86400000
+          const item = {
+            value,
+            expiry
+          }
+          localStorage.setItem(key, JSON.stringify(item))
+        },
       
-    </div>
-  
-  <div class="widget-body"><div class="ui-collection" data-layout="list" data-variant="nav" data-density="compact">
-  
+        get: key => {
+          const itemStr = localStorage.getItem(key)
+      
+          if (!itemStr) {
+            return undefined
+          }
+          const item = JSON.parse(itemStr)
+          const now = Date.now()
+      
+          if (now > item.expiry) {
+            localStorage.removeItem(key)
+            return undefined
+          }
+          return item.value
+        }
+      }
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/09/20/java-interview-quick-reference/" title="Java 后端面试题速查（持续更新）">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Java 后端面试题速查（持续更新）</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
+      win.getScript = (url, attr = {}) => new Promise((resolve, reject) => {
+        const script = document.createElement('script')
+        script.src = url
+        script.async = true
+        script.onerror = reject
+        script.onload = script.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          script.onload = script.onreadystatechange = null
+          resolve()
+        }
 
-  
+        Object.keys(attr).forEach(key => {
+          script.setAttribute(key, attr[key])
+        })
+
+        document.head.appendChild(script)
+      })
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/08/22/gateway-jwt-auth-notes/" title="微服务网关统一鉴权：JWT + 全局过滤器设计">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">微服务网关统一鉴权：JWT + 全局过滤器设计</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
+      win.getCSS = (url, id = false) => new Promise((resolve, reject) => {
+        const link = document.createElement('link')
+        link.rel = 'stylesheet'
+        link.href = url
+        if (id) link.id = id
+        link.onerror = reject
+        link.onload = link.onreadystatechange = function() {
+          const loadState = this.readyState
+          if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+          link.onload = link.onreadystatechange = null
+          resolve()
+        }
+        document.head.appendChild(link)
+      })
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/10/05/docker-deploy-notes/" title="Docker 部署 Spring Boot 微服务（实战流程）">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Docker 部署 Spring Boot 微服务（实战流程）</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
+      win.activateDarkMode = () => {
+        document.documentElement.setAttribute('data-theme', 'dark')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#18171d')
+        }
+      }
+      win.activateLightMode = () => {
+        document.documentElement.setAttribute('data-theme', 'light')
+        if (document.querySelector('meta[name="theme-color"]') !== null) {
+          document.querySelector('meta[name="theme-color"]').setAttribute('content', '#f7f9fe')
+        }
+      }
+      const t = saveToLocal.get('theme')
     
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/09/05/nacos-registry-config-notes/" title="Nacos：注册中心与配置中心的实战用法">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Nacos：注册中心与配置中心的实战用法</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
+          const isDarkMode = window.matchMedia('(prefers-color-scheme: dark)').matches
+          const isLightMode = window.matchMedia('(prefers-color-scheme: light)').matches
+          const isNotSpecified = window.matchMedia('(prefers-color-scheme: no-preference)').matches
+          const hasNoSupport = !isDarkMode && !isLightMode && !isNotSpecified
 
-  
-    
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/08/08/note-module-design-notes/" title="项目实战：游记模块的接口设计与缓存实践">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">项目实战：游记模块的接口设计与缓存实践</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-    
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/07/18/mq-reliability-notes/" title="消息队列：可靠投递、幂等与顺序">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">消息队列：可靠投递、幂等与顺序</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-    
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/07/04/spring-ioc-aop-notes/" title="Spring IOC 与 AOP：原理与常见坑">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Spring IOC 与 AOP：原理与常见坑</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-    
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/06/20/spring-cloud-openfeign-notes/" title="Spring Cloud Alibaba：OpenFeign + Nacos 实战笔记">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Spring Cloud Alibaba：OpenFeign + Nacos 实战笔记</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-    
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/06/06/spring-transaction-notes/" title="Spring 事务失效的六种场景（附解决方案）">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Spring 事务失效的六种场景（附解决方案）</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-    
-<a class="ui-collection__item card-hover card-hover--spotlight" href="/2026/05/23/redis-cache-problems-notes/" title="Redis 缓存三问 + 分布式锁：穿透/击穿/雪崩">
-  
-  
-  
-    <span class="ui-collection__content">
-      
-      <span class="ui-collection__title">Redis 缓存三问 + 分布式锁：穿透/击穿/雪崩</span>
-      
-      
-    </span>
-  
-  
-  
-  
-</a>
-
-  
-</div></div>
-  
-</widget>
-
-
-</div>
-
-</div></aside><div class="l_main" id="main" data-ui-surface="content">
-
-
-
-
-
-
-<div class="article-banner-wrap slide-up"><div class="article banner top">
-  <div class="content">
-    
-    <div class="top bread-nav footnote"><div class="top-row"><div class="left" id="breadcrumb"><a class="cap breadcrumb" href="/">主页</a>
-<span class="sep"></span><a class="cap breadcrumb" href="/">文章</a><span class="sep"></span><a class="cap breadcrumb-link" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/">框架与中间件</a>
-</div></div><div class="meta-row">
-<div class="flex-row" id="post-meta"><span class="text created">发布于：<time datetime="2026-07-04T12:50:00.000Z">2026-07-04</time></span><span class="sep updated"></span><span class="text updated">更新于：<time datetime="2026-10-20T10:52:29.250Z">2026-10-20</time></span></div>
-</div></div>
-    
-    <div class="bottom only-title">
-      
-      <div class="text-area">
-        <h1 class="text title"><span>Spring IOC 与 AOP：原理与常见坑</span></h1>
+          if (t === undefined) {
+            if (isLightMode) activateLightMode()
+            else if (isDarkMode) activateDarkMode()
+            else if (isNotSpecified || hasNoSupport) {
+              const now = new Date()
+              const hour = now.getHours()
+              const isNight = hour <= 6 || hour >= 18
+              isNight ? activateDarkMode() : activateLightMode()
+            }
+            window.matchMedia('(prefers-color-scheme: dark)').addListener(e => {
+              if (saveToLocal.get('theme') === undefined) {
+                e.matches ? activateDarkMode() : activateLightMode()
+              }
+            })
+          } else if (t === 'light') activateLightMode()
+          else activateDarkMode()
         
-      </div>
-    </div>
+      const asideStatus = saveToLocal.get('aside-status')
+      if (asideStatus !== undefined) {
+        if (asideStatus === 'hide') {
+          document.documentElement.classList.add('hide-aside')
+        } else {
+          document.documentElement.classList.remove('hide-aside')
+        }
+      }
     
-  </div>
-  </div></div>
-<article class="md-text content slide-up"><h2 id="IOC-到底解决了什么"><a href="#IOC-到底解决了什么" class="headerlink" title="IOC 到底解决了什么"></a>IOC 到底解决了什么</h2><p>控制反转 = <strong>对象的创建和依赖注入交给容器</strong>。好处：解耦、便于替换实现（面向接口）、统一管理生命周期。</p>
+      const detectApple = () => {
+        if(/iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent)){
+          document.documentElement.classList.add('apple')
+        }
+      }
+      detectApple()
+    })(window)</script><link rel="stylesheet" href="/css/custom.css"><meta name="generator" content="Hexo 7.3.0"></head><body data-type="anzhiyu"><div id="web_bg"></div><div id="an_music_bg"></div><div id="loading-box" onclick="document.getElementById(&quot;loading-box&quot;).classList.add(&quot;loaded&quot;)"><div class="loading-bg"><img class="loading-img nolazyload" alt="加载头像" src="https://avatars.githubusercontent.com/u/344862469?v=4"/><div class="loading-image-dot"></div></div></div><script>const preloader = {
+  endLoading: () => {
+    document.getElementById('loading-box').classList.add("loaded");
+  },
+  initLoading: () => {
+    document.getElementById('loading-box').classList.remove("loaded")
+  }
+}
+window.addEventListener('load',()=> { preloader.endLoading() })
+setTimeout(function(){preloader.endLoading();},10000)
+
+if (true) {
+  document.addEventListener('pjax:send', () => { preloader.initLoading() })
+  document.addEventListener('pjax:complete', () => { preloader.endLoading() })
+}</script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.10/progress_bar/progress_bar.css"/><script async="async" src="https://cdn.cbd.int/pace-js@1.2.4/pace.min.js" data-pace-options="{ &quot;restartOnRequestAfter&quot;:false,&quot;eventLag&quot;:false}"></script><div class="post" id="body-wrap"><header class="not-top-img" id="page-header"><nav id="nav"><div id="nav-group"><span id="blog_name"><a id="site-name" href="/" accesskey="h"><div class="title">田子誉的博客</div><i class="anzhiyufont anzhiyu-icon-house-chimney"></i></a></span><div class="mask-name-container"><div id="name-container"><a id="page-name" href="javascript:anzhiyu.scrollToDest(0, 500)">PAGE_NAME</a></div></div><div id="menus"><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><span> 首页</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 归档</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于</span></a></div></div></div><div id="nav-right"><div class="nav-button" id="randomPost_button"><a class="site-page" onclick="toRandomPost()" title="随机前往一个文章" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-dice"></i></a></div><input id="center-console" type="checkbox"/><label class="widget" for="center-console" title="中控台" onclick="anzhiyu.switchConsole();"><i class="left"></i><i class="widget center"></i><i class="widget right"></i></label><div id="console"><div class="console-card-group-reward"><ul class="reward-all console-card"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" alt="微信" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" alt="支付宝" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png"/></a><div class="post-qr-code-desc">支付宝</div></li></ul></div><div class="console-card-group"><div class="console-card-group-left"><div class="console-card" id="card-newest-comments"><div class="card-content"><div class="author-content-item-tips">互动</div><span class="author-content-item-title"> 最新评论</span></div><div class="aside-list"><span>正在加载中...</span></div></div></div><div class="console-card-group-right"><div class="console-card tags"><div class="card-content"><div class="author-content-item-tips">兴趣点</div><span class="author-content-item-title">寻找你感兴趣的领域</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AOP/" style="font-size: 1.05rem;">AOP<sup>1</sup></a><a href="/tags/Docker/" style="font-size: 1.05rem;">Docker<sup>1</sup></a><a href="/tags/HashMap/" style="font-size: 1.05rem;">HashMap<sup>1</sup></a><a href="/tags/IOC/" style="font-size: 1.05rem;">IOC<sup>1</sup></a><a href="/tags/JVM/" style="font-size: 1.05rem;">JVM<sup>1</sup></a><a href="/tags/JWT/" style="font-size: 1.05rem;">JWT<sup>1</sup></a><a href="/tags/Java/" style="font-size: 1.05rem;">Java<sup>4</sup></a><a href="/tags/MQ/" style="font-size: 1.05rem;">MQ<sup>1</sup></a><a href="/tags/MyBatis-Plus/" style="font-size: 1.05rem;">MyBatis-Plus<sup>1</sup></a><a href="/tags/MySQL/" style="font-size: 1.05rem;">MySQL<sup>1</sup></a><a href="/tags/Nacos/" style="font-size: 1.05rem;">Nacos<sup>2</sup></a><a href="/tags/OpenFeign/" style="font-size: 1.05rem;">OpenFeign<sup>1</sup></a><a href="/tags/Redis/" style="font-size: 1.05rem;">Redis<sup>2</sup></a><a href="/tags/RocketMQ/" style="font-size: 1.05rem;">RocketMQ<sup>1</sup></a><a href="/tags/Spring/" style="font-size: 1.05rem;">Spring<sup>2</sup></a><a href="/tags/Spring-Cloud/" style="font-size: 1.05rem;">Spring Cloud<sup>3</sup></a><a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 1.05rem;">中间件<sup>1</sup></a><a href="/tags/%E4%BA%8B%E5%8A%A1/" style="font-size: 1.05rem;">事务<sup>1</sup></a><a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" style="font-size: 1.05rem;">分布式锁<sup>1</sup></a><a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/" style="font-size: 1.05rem;">垃圾回收<sup>1</sup></a><a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 1.05rem;">并发<sup>2</sup></a><a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" style="font-size: 1.05rem;">微服务<sup>5</sup></a><a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 1.05rem;">数据库<sup>1</sup></a><a href="/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 1.05rem;">索引<sup>1</sup></a><a href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 1.05rem;">线程池<sup>1</sup></a><a href="/tags/%E7%BC%93%E5%AD%98/" style="font-size: 1.05rem;">缓存<sup>1</sup></a><a href="/tags/%E7%BD%91%E5%85%B3/" style="font-size: 1.05rem;">网关<sup>1</sup></a><a href="/tags/%E9%83%A8%E7%BD%B2/" style="font-size: 1.05rem;">部署<sup>1</sup></a><a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 1.05rem;">集合<sup>2</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 1.05rem;">面试<sup>8</sup></a></div></div><hr/></div></div><div class="console-card history"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-box-archiv"></i><span>文章</span></div><div class="card-archives"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-archive"></i><span>归档</span></div><ul class="card-archive-list"><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/10/"><span class="card-archive-list-date">十月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">1</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/09/"><span class="card-archive-list-date">九月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/08/"><span class="card-archive-list-date">八月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/07/"><span class="card-archive-list-date">七月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/06/"><span class="card-archive-list-date">六月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/05/"><span class="card-archive-list-date">五月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/04/"><span class="card-archive-list-date">四月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li><li class="card-archive-list-item"><a class="card-archive-list-link" href="/archives/2026/03/"><span class="card-archive-list-date">三月 2026</span><div class="card-archive-list-count-group"><span class="card-archive-list-count">2</span><span>篇</span></div></a></li></ul></div><hr/></div></div></div><div class="button-group"><div class="console-btn-item"><a class="darkmode_switchbutton" title="显示模式切换" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-moon"></i></a></div><div class="console-btn-item" id="consoleHideAside" onclick="anzhiyu.hideAsideBtn()" title="边栏显示控制"><a class="asideSwitch"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></a></div><div class="console-btn-item" id="consoleMusic" onclick="anzhiyu.musicToggle()" title="音乐开关"><a class="music-switch"><i class="anzhiyufont anzhiyu-icon-music"></i></a></div></div><div class="console-mask" onclick="anzhiyu.hideConsole()" href="javascript:void(0);"></div></div><div class="nav-button" id="nav-totop"><a class="totopbtn" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i><span id="percent" onclick="anzhiyu.scrollToDest(0,500)">0</span></a></div><div id="toggle-menu"><a class="site-page" href="javascript:void(0);" title="切换"><i class="anzhiyufont anzhiyu-icon-bars"></i></a></div></div></div></nav></header><main id="blog-container"><div class="layout" id="content-inner"><div id="post"><div id="post-info"><div id="post-firstinfo"><div class="meta-firstline"><a class="post-meta-original">原创</a><span class="post-meta-categories"><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-inbox post-meta-icon"></i><a class="post-meta-categories" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/" itemprop="url">框架与中间件</a></span><span class="article-meta tags"><a class="article-meta__tags" href="/tags/%E9%9D%A2%E8%AF%95/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>面试</span></a><a class="article-meta__tags" href="/tags/Spring/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>Spring</span></a><a class="article-meta__tags" href="/tags/IOC/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>IOC</span></a><a class="article-meta__tags" href="/tags/AOP/" tabindex="-1" itemprop="url"> <span> <i class="anzhiyufont anzhiyu-icon-hashtag"></i>AOP</span></a></span></div></div><h1 class="post-title" itemprop="name headline">Spring IOC 与 AOP：原理与常见坑</h1><div id="post-meta"><div class="meta-firstline"><span class="post-meta-date"><i class="anzhiyufont anzhiyu-icon-calendar-days post-meta-icon"></i><span class="post-meta-label">发表于</span><time class="post-meta-date-created" itemprop="dateCreated datePublished" datetime="2026-07-04T12:50:00.000Z" title="发表于 2026-07-04 20:50:00">2026-07-04</time><span class="post-meta-separator"></span><i class="anzhiyufont anzhiyu-icon-history post-meta-icon"></i><span class="post-meta-label">更新于</span><time class="post-meta-date-updated" itemprop="dateCreated datePublished" datetime="2026-10-20T10:52:29.250Z" title="更新于 2026-10-20 18:52:29">2026-10-20</time></span></div><div class="meta-secondline"><span class="post-meta-separator">       </span><span class="post-meta-position" title="作者IP属地为沈阳"><i class="anzhiyufont anzhiyu-icon-location-dot"></i>沈阳</span></div></div></div><article class="post-content" id="article-container" itemscope itemtype="https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/"><header><a class="post-meta-categories" href="/categories/%E6%A1%86%E6%9E%B6%E4%B8%8E%E4%B8%AD%E9%97%B4%E4%BB%B6/" itemprop="url">框架与中间件</a><a href="/tags/%E9%9D%A2%E8%AF%95/" tabindex="-1" itemprop="url">面试</a><a href="/tags/Spring/" tabindex="-1" itemprop="url">Spring</a><a href="/tags/IOC/" tabindex="-1" itemprop="url">IOC</a><a href="/tags/AOP/" tabindex="-1" itemprop="url">AOP</a><h1 id="CrawlerTitle" itemprop="name headline">Spring IOC 与 AOP：原理与常见坑</h1><span itemprop="author" itemscope itemtype="http://schema.org/Person">Tianzi666-coder</span><time itemprop="dateCreated datePublished" datetime="2026-07-04T12:50:00.000Z" title="发表于 2026-07-04 20:50:00">2026-07-04</time><time itemprop="dateCreated datePublished" datetime="2026-10-20T10:52:29.250Z" title="更新于 2026-10-20 18:52:29">2026-10-20</time></header><h2 id="IOC-到底解决了什么"><a href="#IOC-到底解决了什么" class="headerlink" title="IOC 到底解决了什么"></a>IOC 到底解决了什么</h2><p>控制反转 &#x3D; <strong>对象的创建和依赖注入交给容器</strong>。好处：解耦、便于替换实现（面向接口）、统一管理生命周期。</p>
 <span id="more"></span>
 
 <h2 id="Bean-生命周期（背这个顺序）"><a href="#Bean-生命周期（背这个顺序）" class="headerlink" title="Bean 生命周期（背这个顺序）"></a>Bean 生命周期（背这个顺序）</h2><ol>
 <li>实例化（反射调用构造器）</li>
 <li>属性填充（<code>populateBean</code>，依赖注入）</li>
-<li><code>Aware</code> 回调（<code>BeanNameAware</code> / <code>BeanFactoryAware</code> / <code>ApplicationContextAware</code>）</li>
+<li><code>Aware</code> 回调（<code>BeanNameAware</code> &#x2F; <code>BeanFactoryAware</code> &#x2F; <code>ApplicationContextAware</code>）</li>
 <li><code>BeanPostProcessor#postProcessBeforeInitialization</code></li>
 <li><code>@PostConstruct</code> → <code>InitializingBean#afterPropertiesSet</code> → <code>init-method</code></li>
 <li><code>BeanPostProcessor#postProcessAfterInitialization</code>（<strong>AOP 代理就在这生成</strong>）</li>
 <li>使用</li>
 <li><code>@PreDestroy</code> → <code>DisposableBean#destroy</code> → <code>destroy-method</code></li>
 </ol>
-<h2 id="循环依赖与三级缓存"><a href="#循环依赖与三级缓存" class="headerlink" title="循环依赖与三级缓存"></a>循环依赖与三级缓存</h2><div class="md-table-scroll"><table>
+<h2 id="循环依赖与三级缓存"><a href="#循环依赖与三级缓存" class="headerlink" title="循环依赖与三级缓存"></a>循环依赖与三级缓存</h2><table>
 <thead>
 <tr>
 <th>缓存</th>
@@ -338,9 +235,9 @@
 <td>singletonFactories（三级）</td>
 <td>生成早期引用的 <strong>ObjectFactory</strong>（可能返回代理）</td>
 </tr>
-</tbody></table></div>
+</tbody></table>
 <p>为什么需要三级？因为 <strong>AOP 代理</strong>要到初始化后才生成，第三级缓存放的是”工厂”，在需要时能提前生产代理对象。<strong>构造器注入的循环依赖无法解决</strong>（对象还没实例化出来）。</p>
-<h2 id="AOP-的两种代理"><a href="#AOP-的两种代理" class="headerlink" title="AOP 的两种代理"></a>AOP 的两种代理</h2><div class="md-table-scroll"><table>
+<h2 id="AOP-的两种代理"><a href="#AOP-的两种代理" class="headerlink" title="AOP 的两种代理"></a>AOP 的两种代理</h2><table>
 <thead>
 <tr>
 <th>方式</th>
@@ -355,666 +252,156 @@
 <td>CGLIB</td>
 <td>没有接口（继承子类，所以 <strong>final 类和 final 方法代理不了</strong>）</td>
 </tr>
-</tbody></table></div>
+</tbody></table>
 <p>Spring Boot 2.x 起默认 <code>proxyTargetClass = true</code>，即<strong>默认 CGLIB</strong>。</p>
 <h2 id="常见坑"><a href="#常见坑" class="headerlink" title="常见坑"></a>常见坑</h2><ul>
-<li><strong>同类自调用失效</strong>：<code>this.method()</code> 不走代理，<code>@Transactional</code> / <code>@Async</code> / <code>@Cacheable</code> 全废；</li>
+<li><strong>同类自调用失效</strong>：<code>this.method()</code> 不走代理，<code>@Transactional</code> &#x2F; <code>@Async</code> &#x2F; <code>@Cacheable</code> 全废；</li>
 <li><strong>private 方法</strong>加注解无效（代理不了）；</li>
 <li><code>@Async</code> 方法返回值必须是 <code>void</code> 或 <code>Future</code>。</li>
 </ul>
 <h2 id="面试一句话"><a href="#面试一句话" class="headerlink" title="面试一句话"></a>面试一句话</h2><p>IOC 是”把 new 交给容器”，AOP 是”用代理在方法前后织入逻辑”；两者共同的实现基础都是<strong>反射 + 动态代理</strong>。</p>
-</article>
+</article><div class="post-copyright"><div class="copyright-cc-box"><i class="anzhiyufont anzhiyu-icon-copyright"></i></div><div class="post-copyright__author_box"><a class="post-copyright__author_img" href="/" title="头像"><img class="post-copyright__author_img_back" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://avatars.githubusercontent.com/u/344862469?v=4" title="头像" alt="头像"><img class="post-copyright__author_img_front" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://avatars.githubusercontent.com/u/344862469?v=4" title="头像" alt="头像"></a><div class="post-copyright__author_name">Tianzi666-coder</div><div class="post-copyright__author_desc">后端学习笔记 · Spring Cloud · 分布式 · 云原生</div></div><div class="post-copyright__post__info"><a class="post-copyright__original" title="该文章为原创文章，注意版权协议" href="https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/">原创</a><a class="post-copyright-title"><span onclick="rm.copyPageUrl('https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/')">Spring IOC 与 AOP：原理与常见坑</span></a></div><div class="post-tools" id="post-tools"><div class="post-tools-left"><div class="rewardLeftButton"><div class="post-reward" onclick="anzhiyu.addRewardMask()"><div class="reward-button button--animated" title="赞赏作者"><i class="anzhiyufont anzhiyu-icon-hand-heart-fill"></i>打赏作者</div><div class="reward-main"><div class="reward-all"><span class="reward-title">感谢你赐予我前进的力量</span><ul class="reward-group"><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-weichat.png" alt="微信"/></a><div class="post-qr-code-desc">微信</div></li><li class="reward-item"><a href="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" target="_blank"><img class="post-qr-code-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/qrcode-alipay.png" alt="支付宝"/></a><div class="post-qr-code-desc">支付宝</div></li></ul><a class="reward-main-btn" href="/about/#about-reward" target="_blank"><div class="reward-text">赞赏者名单</div><div class="reward-dec">因为你们的支持让我意识到写文章的价值🙏</div></a></div></div></div><div id="quit-box" onclick="anzhiyu.removeRewardMask()" style="display: none"></div></div><div class="shareRight"><div class="share-link mobile"><div class="share-qrcode"><div class="share-button" title="使用手机访问这篇文章"><i class="anzhiyufont anzhiyu-icon-qrcode"></i></div><div class="share-main"><div class="share-main-all"><div id="qrcode" title="https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/"></div><div class="reward-dec">使用手机访问这篇文章</div></div></div></div></div><div class="share-link weibo"><a class="share-button" target="_blank" href="https://service.weibo.com/share/share.php?title=undefined&amp;url=https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/&amp;pic=undefined" rel="external nofollow noreferrer noopener"><i class="anzhiyufont anzhiyu-icon-weibo"></i></a></div><script>function copyCurrentPageUrl() {
+  var currentPageUrl = window.location.href;
+  var input = document.createElement("input");
+  input.setAttribute("value", currentPageUrl);
+  document.body.appendChild(input);
+  input.select();
+  input.setSelectionRange(0, 99999);
+  document.execCommand("copy");
+  document.body.removeChild(input);
+}</script><div class="share-link copyurl"><div class="share-button" id="post-share-url" title="复制链接" onclick="copyCurrentPageUrl()"><i class="anzhiyufont anzhiyu-icon-link"></i></div></div></div></div></div><div class="post-copyright__notice"><span class="post-copyright-info">本博客所有文章除特别声明外，均采用 <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank">CC BY-NC-SA 4.0</a> 许可协议。转载请注明来自 <a href="https://tianzi666-coder.github.io" target="_blank">田子誉的博客</a>！</span></div></div><div class="post-tools-right"><div class="tag_share"><div class="post-meta__box"><div class="post-meta__box__tag-list"><a class="post-meta__box__tags" href="/tags/%E9%9D%A2%E8%AF%95/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>面试<span class="tagsPageCount">8</span></a><a class="post-meta__box__tags" href="/tags/Spring/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>Spring<span class="tagsPageCount">2</span></a><a class="post-meta__box__tags" href="/tags/IOC/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>IOC<span class="tagsPageCount">1</span></a><a class="post-meta__box__tags" href="/tags/AOP/"><span class="tags-punctuation"> <i class="anzhiyufont anzhiyu-icon-tag"></i></span>AOP<span class="tagsPageCount">1</span></a></div></div></div><div class="post_share"><div class="social-share" data-image="/img/covers/docker-deploy-notes.svg" data-sites="facebook,twitter,wechat,weibo,qq"></div><link rel="stylesheet" href="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/css/share.min.css" media="print" onload="this.media='all'"/><script src="https://cdn.cbd.int/butterfly-extsrc@1.1.3/sharejs/dist/js/social-share.min.js" defer="defer"></script></div></div><nav class="pagination-post" id="pagination"><div class="prev-post pull-left"><a href="/2026/06/20/spring-cloud-openfeign-notes/"><img class="prev-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/spring-cloud-openfeign-notes.svg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of previous post"><div class="pagination-info"><div class="label">上一篇</div><div class="prev_info">Spring Cloud Alibaba：OpenFeign + Nacos 实战笔记</div></div></a></div><div class="next-post pull-right"><a href="/2026/07/18/mq-reliability-notes/"><img class="next-cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/mq-reliability-notes.svg" onerror="onerror=null;src='/img/404.jpg'" alt="cover of next post"><div class="pagination-info"><div class="label">下一篇</div><div class="next_info">消息队列：可靠投递、幂等与顺序</div></div></a></div></nav><div class="relatedPosts"><div class="headline"><i class="anzhiyufont anzhiyu-icon-thumbs-up fa-fw" style="font-size: 1.5rem; margin-right: 4px"></i><span>喜欢这篇文章的人也看了</span></div><div class="relatedPosts-list"><div><a href="/2026/06/06/spring-transaction-notes/" title="Spring 事务失效的六种场景（附解决方案）"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/spring-transaction-notes.svg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2026-06-06</div><div class="title">Spring 事务失效的六种场景（附解决方案）</div></div></a></div><div><a href="/2026/09/20/java-interview-quick-reference/" title="Java 后端面试题速查（持续更新）"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/java-interview-quick-reference.svg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2026-09-20</div><div class="title">Java 后端面试题速查（持续更新）</div></div></a></div><div><a href="/2026/04/11/jvm-memory-gc-notes/" title="JVM 内存结构与垃圾回收：一次讲清楚"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/jvm-memory-gc-notes.svg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2026-04-11</div><div class="title">JVM 内存结构与垃圾回收：一次讲清楚</div></div></a></div><div><a href="/2026/07/18/mq-reliability-notes/" title="消息队列：可靠投递、幂等与顺序"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/mq-reliability-notes.svg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2026-07-18</div><div class="title">消息队列：可靠投递、幂等与顺序</div></div></a></div><div><a href="/2026/03/28/java-threadpool-notes/" title="Java 线程池：七个参数与执行流程（面试必背）"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/java-threadpool-notes.svg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2026-03-28</div><div class="title">Java 线程池：七个参数与执行流程（面试必背）</div></div></a></div><div><a href="/2026/05/09/mysql-index-notes/" title="MySQL 索引：B+ 树、回表与 EXPLAIN 实战"><img class="cover" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/mysql-index-notes.svg" alt="cover"><div class="content is-center"><div class="date"><i class="anzhiyufont anzhiyu-icon-calendar-days fa-fw"></i> 2026-05-09</div><div class="title">MySQL 索引：B+ 树、回表与 EXPLAIN 实战</div></div></a></div></div></div></div><div class="aside-content" id="aside-content"><div class="card-widget card-info"><div class="card-content"><div class="author-info-avatar"><img class="avatar-img" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://avatars.githubusercontent.com/u/344862469?v=4" onerror="this.onerror=null;this.src='/img/friend_404.gif'" alt="avatar"/></div><div class="author-info__description">Java 后端开发方向，记录 Spring / MySQL / Redis 的学习与踩坑</div><div class="author-info__bottom-group"><a class="author-info__bottom-group-left" href="/"><h1 class="author-info__name">Tianzi666-coder</h1><div class="author-info__desc">后端学习笔记 · Spring Cloud · 分布式 · 云原生</div></a><div class="card-info-social-icons is-center"><a class="social-icon faa-parent animated-hover" href="https://github.com/Tianzi666-coder" target="_blank" title="Github"><i class="anzhiyufont anzhiyu-icon-github"></i></a><a class="social-icon faa-parent animated-hover" href="https://gitee.com/tianziyu666" target="_blank" title="Gitee"><i class="anzhiyufont anzhiyu-icon-envelope"></i></a><a class="social-icon faa-parent animated-hover" href="mailto:15042177953@163.com" target="_blank" title="邮箱"><i class="anzhiyufont anzhiyu-icon-envelope"></i></a></div></div></div></div><div class="card-widget card-announcement"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bullhorn anzhiyu-shake"></i><span>公告</span></div><div class="announcement_content">沈阳理工大学 · 计算机科学与技术，2027 届。这里记录 Java 后端的学习笔记、项目踩坑与面试总结，欢迎交流。</div></div><div class="sticky_layout"><div class="card-widget" id="card-toc"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-bars"></i><span>文章目录</span><span class="toc-percentage"></span></div><div class="toc-content"><ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#IOC-%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-number">1.</span> <span class="toc-text">IOC 到底解决了什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Bean-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%88%E8%83%8C%E8%BF%99%E4%B8%AA%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="toc-number">2.</span> <span class="toc-text">Bean 生命周期（背这个顺序）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E4%B8%8E%E4%B8%89%E7%BA%A7%E7%BC%93%E5%AD%98"><span class="toc-number">3.</span> <span class="toc-text">循环依赖与三级缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AOP-%E7%9A%84%E4%B8%A4%E7%A7%8D%E4%BB%A3%E7%90%86"><span class="toc-number">4.</span> <span class="toc-text">AOP 的两种代理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91"><span class="toc-number">5.</span> <span class="toc-text">常见坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%A2%E8%AF%95%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-number">6.</span> <span class="toc-text">面试一句话</span></a></li></ol></div></div><div class="card-widget card-recent-post"><div class="item-headline"><i class="anzhiyufont anzhiyu-icon-history"></i><span>最近发布</span></div><div class="aside-list"><div class="aside-list-item"><a class="thumbnail" href="/2026/10/05/docker-deploy-notes/" title="Docker 部署 Spring Boot 微服务（实战流程）"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/docker-deploy-notes.svg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Docker 部署 Spring Boot 微服务（实战流程）"/></a><div class="content"><a class="title" href="/2026/10/05/docker-deploy-notes/" title="Docker 部署 Spring Boot 微服务（实战流程）">Docker 部署 Spring Boot 微服务（实战流程）</a><time datetime="2026-10-05T12:35:00.000Z" title="发表于 2026-10-05 20:35:00">2026-10-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/20/java-interview-quick-reference/" title="Java 后端面试题速查（持续更新）"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/java-interview-quick-reference.svg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Java 后端面试题速查（持续更新）"/></a><div class="content"><a class="title" href="/2026/09/20/java-interview-quick-reference/" title="Java 后端面试题速查（持续更新）">Java 后端面试题速查（持续更新）</a><time datetime="2026-09-20T12:00:00.000Z" title="发表于 2026-09-20 20:00:00">2026-09-20</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/09/05/nacos-registry-config-notes/" title="Nacos：注册中心与配置中心的实战用法"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/nacos-registry-config-notes.svg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="Nacos：注册中心与配置中心的实战用法"/></a><div class="content"><a class="title" href="/2026/09/05/nacos-registry-config-notes/" title="Nacos：注册中心与配置中心的实战用法">Nacos：注册中心与配置中心的实战用法</a><time datetime="2026-09-05T13:20:00.000Z" title="发表于 2026-09-05 21:20:00">2026-09-05</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/22/gateway-jwt-auth-notes/" title="微服务网关统一鉴权：JWT + 全局过滤器设计"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/gateway-jwt-auth-notes.svg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="微服务网关统一鉴权：JWT + 全局过滤器设计"/></a><div class="content"><a class="title" href="/2026/08/22/gateway-jwt-auth-notes/" title="微服务网关统一鉴权：JWT + 全局过滤器设计">微服务网关统一鉴权：JWT + 全局过滤器设计</a><time datetime="2026-08-22T12:45:00.000Z" title="发表于 2026-08-22 20:45:00">2026-08-22</time></div></div><div class="aside-list-item"><a class="thumbnail" href="/2026/08/08/note-module-design-notes/" title="项目实战：游记模块的接口设计与缓存实践"><img src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/covers/note-module-design-notes.svg" onerror="this.onerror=null;this.src='/img/404.jpg'" alt="项目实战：游记模块的接口设计与缓存实践"/></a><div class="content"><a class="title" href="/2026/08/08/note-module-design-notes/" title="项目实战：游记模块的接口设计与缓存实践">项目实战：游记模块的接口设计与缓存实践</a><time datetime="2026-08-08T12:10:00.000Z" title="发表于 2026-08-08 20:10:00">2026-08-08</time></div></div></div></div></div></div></div></main><footer id="footer"><div id="footer-wrap"></div><div id="footer-bar"><div class="footer-bar-links"><div class="footer-bar-left"><div id="footer-bar-tips"><div class="copyright">&copy;2026 By <a class="footer-bar-link" href="/" title="Tianzi666-coder" target="_blank">Tianzi666-coder</a></div></div><div id="footer-type-tips"></div></div><div class="footer-bar-right"><a class="footer-bar-link" target="_blank" rel="noopener" href="https://github.com/anzhiyu-c/hexo-theme-anzhiyu" title="主题">主题</a></div></div></div></footer></div><div id="sidebar"><div id="menu-mask"></div><div id="sidebar-menus"><div class="sidebar-site-data site-data is-center"><a href="/archives/" title="archive"><div class="headline">文章</div><div class="length-num">15</div></a><a href="/tags/" title="tag"><div class="headline">标签</div><div class="length-num">30</div></a><a href="/categories/" title="category"><div class="headline">分类</div><div class="length-num">3</div></a></div><span class="sidebar-menu-item-title">功能</span><div class="sidebar-menu-item"><a class="darkmode_switchbutton menu-child" href="javascript:void(0);" title="显示模式"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span>显示模式</span></a></div><div class="back-menu-list-groups"><div class="back-menu-list-group"><div class="back-menu-list-title">网页</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://hexo.anheyu.com/" title="博客"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="/img/favicon.ico" alt="博客"/><span class="back-menu-item-text">博客</span></a></div></div><div class="back-menu-list-group"><div class="back-menu-list-title">项目</div><div class="back-menu-list"><a class="back-menu-item" target="_blank" rel="noopener" href="https://image.anheyu.com/" title="安知鱼图床"><img class="back-menu-item-icon" src= "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" onerror="this.onerror=null,this.src=&quot;/img/404.jpg&quot;" data-lazy-src="https://image.anheyu.com/favicon.ico" alt="安知鱼图床"/><span class="back-menu-item-text">安知鱼图床</span></a></div></div></div><div class="menus_items"><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/"><span> 首页</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/archives/"><span> 归档</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/categories/"><span> 分类</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/tags/"><span> 标签</span></a></div><div class="menus_item"><a class="site-page faa-parent animated-hover" href="/about/"><span> 关于</span></a></div></div><span class="sidebar-menu-item-title">标签</span><div class="card-tags"><div class="item-headline"></div><div class="card-tag-cloud"><a href="/tags/AOP/" style="font-size: 0.88rem;">AOP<sup>1</sup></a><a href="/tags/Docker/" style="font-size: 0.88rem;">Docker<sup>1</sup></a><a href="/tags/HashMap/" style="font-size: 0.88rem;">HashMap<sup>1</sup></a><a href="/tags/IOC/" style="font-size: 0.88rem;">IOC<sup>1</sup></a><a href="/tags/JVM/" style="font-size: 0.88rem;">JVM<sup>1</sup></a><a href="/tags/JWT/" style="font-size: 0.88rem;">JWT<sup>1</sup></a><a href="/tags/Java/" style="font-size: 0.88rem;">Java<sup>4</sup></a><a href="/tags/MQ/" style="font-size: 0.88rem;">MQ<sup>1</sup></a><a href="/tags/MyBatis-Plus/" style="font-size: 0.88rem;">MyBatis-Plus<sup>1</sup></a><a href="/tags/MySQL/" style="font-size: 0.88rem;">MySQL<sup>1</sup></a><a href="/tags/Nacos/" style="font-size: 0.88rem;">Nacos<sup>2</sup></a><a href="/tags/OpenFeign/" style="font-size: 0.88rem;">OpenFeign<sup>1</sup></a><a href="/tags/Redis/" style="font-size: 0.88rem;">Redis<sup>2</sup></a><a href="/tags/RocketMQ/" style="font-size: 0.88rem;">RocketMQ<sup>1</sup></a><a href="/tags/Spring/" style="font-size: 0.88rem;">Spring<sup>2</sup></a><a href="/tags/Spring-Cloud/" style="font-size: 0.88rem;">Spring Cloud<sup>3</sup></a><a href="/tags/%E4%B8%AD%E9%97%B4%E4%BB%B6/" style="font-size: 0.88rem;">中间件<sup>1</sup></a><a href="/tags/%E4%BA%8B%E5%8A%A1/" style="font-size: 0.88rem;">事务<sup>1</sup></a><a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" style="font-size: 0.88rem;">分布式锁<sup>1</sup></a><a href="/tags/%E5%9E%83%E5%9C%BE%E5%9B%9E%E6%94%B6/" style="font-size: 0.88rem;">垃圾回收<sup>1</sup></a><a href="/tags/%E5%B9%B6%E5%8F%91/" style="font-size: 0.88rem;">并发<sup>2</sup></a><a href="/tags/%E5%BE%AE%E6%9C%8D%E5%8A%A1/" style="font-size: 0.88rem;">微服务<sup>5</sup></a><a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" style="font-size: 0.88rem;">数据库<sup>1</sup></a><a href="/tags/%E7%B4%A2%E5%BC%95/" style="font-size: 0.88rem;">索引<sup>1</sup></a><a href="/tags/%E7%BA%BF%E7%A8%8B%E6%B1%A0/" style="font-size: 0.88rem;">线程池<sup>1</sup></a><a href="/tags/%E7%BC%93%E5%AD%98/" style="font-size: 0.88rem;">缓存<sup>1</sup></a><a href="/tags/%E7%BD%91%E5%85%B3/" style="font-size: 0.88rem;">网关<sup>1</sup></a><a href="/tags/%E9%83%A8%E7%BD%B2/" style="font-size: 0.88rem;">部署<sup>1</sup></a><a href="/tags/%E9%9B%86%E5%90%88/" style="font-size: 0.88rem;">集合<sup>2</sup></a><a href="/tags/%E9%9D%A2%E8%AF%95/" style="font-size: 0.88rem;">面试<sup>8</sup></a></div></div><hr/></div></div><div id="rightside"><div id="rightside-config-hide"><button id="readmode" type="button" title="阅读模式"><i class="anzhiyufont anzhiyu-icon-book-open"></i></button><button id="translateLink" type="button" title="简繁转换">繁</button><button id="darkmode" type="button" title="浅色和深色模式转换"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i></button><button id="hide-aside-btn" type="button" title="单栏和双栏切换"><i class="anzhiyufont anzhiyu-icon-arrows-left-right"></i></button></div><div id="rightside-config-show"><button id="rightside-config" type="button" title="设置"><i class="anzhiyufont anzhiyu-icon-gear"></i></button><button class="close" id="mobile-toc-button" type="button" title="目录"><i class="anzhiyufont anzhiyu-icon-list-ul"></i></button><button id="go-up" type="button" title="回到顶部"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></button></div></div><div id="nav-music"><a id="nav-music-hoverTips" onclick="anzhiyu.musicToggle()" accesskey="m">播放音乐</a><div id="console-music-bg"></div><meting-js id="8152976493" server="netease" type="playlist" mutex="true" preload="none" theme="var(--anzhiyu-main)" data-lrctype="0" order="random" volume="0.4"></meting-js></div><div id="rightMenu"><div class="rightMenu-group rightMenu-small"><div class="rightMenu-item" id="menu-backward"><i class="anzhiyufont anzhiyu-icon-arrow-left"></i></div><div class="rightMenu-item" id="menu-forward"><i class="anzhiyufont anzhiyu-icon-arrow-right"></i></div><div class="rightMenu-item" id="menu-refresh"><i class="anzhiyufont anzhiyu-icon-arrow-rotate-right" style="font-size: 1rem;"></i></div><div class="rightMenu-item" id="menu-top"><i class="anzhiyufont anzhiyu-icon-arrow-up"></i></div></div><div class="rightMenu-group rightMenu-line rightMenuPlugin"><div class="rightMenu-item" id="menu-copytext"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制选中文本</span></div><div class="rightMenu-item" id="menu-pastetext"><i class="anzhiyufont anzhiyu-icon-paste"></i><span>粘贴文本</span></div><a class="rightMenu-item" id="menu-commenttext"><i class="anzhiyufont anzhiyu-icon-comment-medical"></i><span>引用到评论</span></a><div class="rightMenu-item" id="menu-newwindow"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开</span></div><div class="rightMenu-item" id="menu-copylink"><i class="anzhiyufont anzhiyu-icon-link"></i><span>复制链接地址</span></div><div class="rightMenu-item" id="menu-copyimg"><i class="anzhiyufont anzhiyu-icon-images"></i><span>复制此图片</span></div><div class="rightMenu-item" id="menu-downloadimg"><i class="anzhiyufont anzhiyu-icon-download"></i><span>下载此图片</span></div><div class="rightMenu-item" id="menu-newwindowimg"><i class="anzhiyufont anzhiyu-icon-window-restore"></i><span>新窗口打开图片</span></div><div class="rightMenu-item" id="menu-search"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>站内搜索</span></div><div class="rightMenu-item" id="menu-searchBaidu"><i class="anzhiyufont anzhiyu-icon-magnifying-glass"></i><span>百度搜索</span></div><div class="rightMenu-item" id="menu-music-toggle"><i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span></div><div class="rightMenu-item" id="menu-music-back"><i class="anzhiyufont anzhiyu-icon-backward"></i><span>切换到上一首</span></div><div class="rightMenu-item" id="menu-music-forward"><i class="anzhiyufont anzhiyu-icon-forward"></i><span>切换到下一首</span></div><div class="rightMenu-item" id="menu-music-playlist" onclick="window.open(&quot;https://y.qq.com/n/ryqq/playlist/8802438608&quot;, &quot;_blank&quot;);" style="display: none;"><i class="anzhiyufont anzhiyu-icon-radio"></i><span>查看所有歌曲</span></div><div class="rightMenu-item" id="menu-music-copyMusicName"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制歌名</span></div></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item menu-link" id="menu-randomPost"><i class="anzhiyufont anzhiyu-icon-shuffle"></i><span>随便逛逛</span></a><a class="rightMenu-item menu-link" href="/categories/"><i class="anzhiyufont anzhiyu-icon-cube"></i><span>博客分类</span></a><a class="rightMenu-item menu-link" href="/tags/"><i class="anzhiyufont anzhiyu-icon-tags"></i><span>文章标签</span></a></div><div class="rightMenu-group rightMenu-line rightMenuOther"><a class="rightMenu-item" id="menu-copy" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-copy"></i><span>复制地址</span></a><a class="rightMenu-item" id="menu-commentBarrage" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-message"></i><span class="menu-commentBarrage-text">关闭热评</span></a><a class="rightMenu-item" id="menu-darkmode" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-circle-half-stroke"></i><span class="menu-darkmode-text">深色模式</span></a><a class="rightMenu-item" id="menu-translate" href="javascript:void(0);"><i class="anzhiyufont anzhiyu-icon-language"></i><span>轉為繁體</span></a></div></div><div id="rightmenu-mask"></div><div><script src="/js/utils.js"></script><script src="/js/main.js"></script><script src="/js/tw_cn.js"></script><script src="https://cdn.cbd.int/@fancyapps/ui@6.1.6/dist/fancybox/fancybox.umd.js"></script><script src="https://cdn.cbd.int/instant.page@5.2.0/instantpage.js" type="module"></script><script src="https://cdn.cbd.int/vanilla-lazyload@19.1.3/dist/lazyload.iife.min.js"></script><script src="https://cdn.cbd.int/node-snackbar@0.1.16/dist/snackbar.min.js"></script><canvas id="universe"></canvas><script async src="https://npm.elemecdn.com/anzhiyu-theme-static@1.0.0/dark/dark.js"></script><script>// 消除控制台打印
+var HoldLog = console.log;
+console.log = function () {};
+let now1 = new Date();
+queueMicrotask(() => {
+  const Log = function () {
+    HoldLog.apply(console, arguments);
+  }; //在恢复前输出日志
+  const grt = new Date("04/01/2021 00:00:00"); //此处修改你的建站时间或者网站上线时间
+  now1.setTime(now1.getTime() + 250);
+  const days = (now1 - grt) / 1000 / 60 / 60 / 24;
+  const dnum = Math.floor(days);
+  const ascll = [
+    `欢迎使用安知鱼!`,
+    `生活明朗, 万物可爱`,
+    `
+        
+       █████╗ ███╗   ██╗███████╗██╗  ██╗██╗██╗   ██╗██╗   ██╗
+      ██╔══██╗████╗  ██║╚══███╔╝██║  ██║██║╚██╗ ██╔╝██║   ██║
+      ███████║██╔██╗ ██║  ███╔╝ ███████║██║ ╚████╔╝ ██║   ██║
+      ██╔══██║██║╚██╗██║ ███╔╝  ██╔══██║██║  ╚██╔╝  ██║   ██║
+      ██║  ██║██║ ╚████║███████╗██║  ██║██║   ██║   ╚██████╔╝
+      ╚═╝  ╚═╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝   ╚═╝    ╚═════╝
+        
+        `,
+    "已上线",
+    dnum,
+    "天",
+    "©2026 By 安知鱼 V1.7.1",
+  ];
+  const ascll2 = [`NCC2-036`, `调用前置摄像头拍照成功，识别为【小笨蛋】.`, `Photo captured: `, `🤪`];
 
-<div class="article-tags slide-up"><a class="tag" href="/tags/%E9%9D%A2%E8%AF%95/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>面试</a><a class="tag" href="/tags/Spring/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>Spring</a><a class="tag" href="/tags/IOC/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>IOC</a><a class="tag" href="/tags/AOP/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>AOP</a></div>
-
-<div class="article-footer slide-up">
-    <section id="license">
-      <div class="header"><span>许可协议</span></div>
-      <div class="body"><p>本文采用 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">署名-非商业性使用-相同方式共享 4.0 国际</a> 许可协议，转载请注明出处。</p>
-</div>
-    </section>
-    
-
-</div>
-
-<div class="related-wrap slide-up" id="read-next"><section class="body"><div class="item" id="prev"><div class="note">较新文章</div><a href="/2026/07/18/mq-reliability-notes/">消息队列：可靠投递、幂等与顺序</a></div><div class="item" id="next"><div class="note">较早文章</div><a href="/2026/06/20/spring-cloud-openfeign-notes/">Spring Cloud Alibaba：OpenFeign + Nacos 实战笔记</a></div></section></div>
-
-
-
-
-
-
-<footer class="page-footer slide-up footnote"><hr><div class="text"><p>本站由 <a href="/">Tianzi666-coder</a> 使用 <a target="_blank" rel="noopener" href="https://github.com/xaoxuu/hexo-theme-stellar/tree/1.44.0">Stellar 1.44.0</a> 主题创建。<br>本博客所有文章除特别声明外，均采用 <a target="_blank" rel="noopener" href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a> 许可协议，转载请注明出处。</p>
-</div></footer>
-<div class="main-mask" onclick="sidebar.dismiss()"></div></div><aside class="l_right" data-ui-surface="sidebar"><div class="widgets">
-
-
-
-
-<widget class="widget-wrapper slide-up toc" id="data-toc" collapse="false">
-  
-    <div class="widget-header dis-select">
-      <span class="name">本文目录</span>
-      <a class="cap-action" onclick="sidebar.toggleTOC()"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6h11m-11 6h11m-11 6h11M4 6h1v4m-1 0h2m0 8H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg></a>
-    </div>
-  
-  <div class="widget-body"><ol class="toc ui-collection-adapter"><li class="toc-item toc-level-2"><a class="toc-link" href="#IOC-%E5%88%B0%E5%BA%95%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88"><span class="toc-text">IOC 到底解决了什么</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#Bean-%E7%94%9F%E5%91%BD%E5%91%A8%E6%9C%9F%EF%BC%88%E8%83%8C%E8%BF%99%E4%B8%AA%E9%A1%BA%E5%BA%8F%EF%BC%89"><span class="toc-text">Bean 生命周期（背这个顺序）</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%BE%AA%E7%8E%AF%E4%BE%9D%E8%B5%96%E4%B8%8E%E4%B8%89%E7%BA%A7%E7%BC%93%E5%AD%98"><span class="toc-text">循环依赖与三级缓存</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#AOP-%E7%9A%84%E4%B8%A4%E7%A7%8D%E4%BB%A3%E7%90%86"><span class="toc-text">AOP 的两种代理</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E5%9D%91"><span class="toc-text">常见坑</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#%E9%9D%A2%E8%AF%95%E4%B8%80%E5%8F%A5%E8%AF%9D"><span class="toc-text">面试一句话</span></a></li></ol></div>
-  <div class="widget-footer"><a class="top" onclick="util.scrollTop()"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><!-- Icon from Solar by 480 Design - https://creativecommons.org/licenses/by/4.0/ --><path fill="currentColor" fill-rule="evenodd" d="M11.9426 1.25H12.0574C14.3658 1.24999 16.1748 1.24998 17.5863 1.43975C19.031 1.63399 20.1711 2.03933 21.0659 2.93414C21.9607 3.82895 22.366 4.96897 22.5603 6.41371C22.75 7.82519 22.75 9.63423 22.75 11.9426V12.0574C22.75 14.3658 22.75 16.1748 22.5603 17.5863C22.366 19.031 21.9607 20.1711 21.0659 21.0659C20.1711 21.9607 19.031 22.366 17.5863 22.5603C16.1748 22.75 14.3658 22.75 12.0574 22.75H11.9426C9.63423 22.75 7.82519 22.75 6.41371 22.5603C4.96897 22.366 3.82895 21.9607 2.93414 21.0659C2.03933 20.1711 1.63399 19.031 1.43975 17.5863C1.24998 16.1748 1.24999 14.3658 1.25 12.0574V11.9426C1.24999 9.63423 1.24998 7.82519 1.43975 6.41371C1.63399 4.96897 2.03933 3.82895 2.93414 2.93414C3.82895 2.03933 4.96897 1.63399 6.41371 1.43975C7.82519 1.24998 9.63423 1.24999 11.9426 1.25ZM6.61358 2.92637C5.33517 3.09825 4.56445 3.42514 3.9948 3.9948C3.42514 4.56445 3.09825 5.33517 2.92637 6.61358C2.75159 7.91356 2.75 9.62177 2.75 12C2.75 14.3782 2.75159 16.0864 2.92637 17.3864C3.09825 18.6648 3.42514 19.4355 3.9948 20.0052C4.56445 20.5749 5.33517 20.9018 6.61358 21.0736C7.91356 21.2484 9.62177 21.25 12 21.25C14.3782 21.25 16.0864 21.2484 17.3864 21.0736C18.6648 20.9018 19.4355 20.5749 20.0052 20.0052C20.5749 19.4355 20.9018 18.6648 21.0736 17.3864C21.2484 16.0864 21.25 14.3782 21.25 12C21.25 9.62177 21.2484 7.91356 21.0736 6.61358C20.9018 5.33517 20.5749 4.56445 20.0052 3.9948C19.4355 3.42514 18.6648 3.09825 17.3864 2.92637C16.0864 2.75159 14.3782 2.75 12 2.75C9.62177 2.75 7.91356 2.75159 6.61358 2.92637ZM12 9.56066L9.53033 12.0303C9.23744 12.3232 8.76256 12.3232 8.46967 12.0303C8.17678 11.7374 8.17678 11.2626 8.46967 10.9697L11.4697 7.96967C11.7626 7.67678 12.2374 7.67678 12.5303 7.96967L15.5303 10.9697C15.8232 11.2626 15.8232 11.7374 15.5303 12.0303C15.2374 12.3232 14.7626 12.3232 14.4697 12.0303L12 9.56066ZM12 13.5607L9.53033 16.0303C9.23744 16.3232 8.76256 16.3232 8.46967 16.0303C8.17678 15.7374 8.17678 15.2626 8.46967 14.9697L11.4697 11.9697C11.7626 11.6768 12.2374 11.6768 12.5303 11.9697L15.5303 14.9697C15.8232 15.2626 15.8232 15.7374 15.5303 16.0303C15.2374 16.3232 14.7626 16.3232 14.4697 16.0303L12 13.5607Z" clip-rule="evenodd"/></svg><span>回到顶部</span></a></div>
-</widget>
-
-
-</div></aside><div class='float-panel'>
-  <button type='button' style='display:none' class='laptop-only rightbar-toggle mobile' onclick='sidebar.rightbar()'>
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6h11m-11 6h11m-11 6h11M4 6h1v4m-1 0h2m0 8H4c0-1 2-2 2-3s-1-1.5-2-1"/></svg>
-  </button>
-  <button type='button' style='display:none' class='mobile-only leftbar-toggle mobile' onclick='sidebar.leftbar()'>
-    <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 11c0-3.771 0-5.657 1.172-6.828C4.343 3 6.229 3 10 3h4c3.771 0 5.657 0 6.828 1.172C22 5.343 22 7.229 22 11v2c0 3.771 0 5.657-1.172 6.828C19.657 21 17.771 21 14 21h-4c-3.771 0-5.657 0-6.828-1.172C2 18.657 2 16.771 2 13z"/><path id="sep" stroke-linecap="round" d="M5.5 10h6m-5 4h4m4.5 7V3"/></g></svg>
-  </button>
-</div>
-</div><div class="scripts">
-
-
-<script type="text/javascript">
-  window.canonical = {"originalHost":null,"officialHosts":["localhost"],"encoded":""};
-  window.canonical["param"] = {"permalink":"https://tianzi666-coder.github.io/2026/07/04/spring-ioc-aop-notes/","checklink":"/js/plugins/video.js"};
-  // Fix: Ensure page is at the correct top position on data load
-  if (history.scrollRestoration) {
-    history.scrollRestoration = 'auto';
-  }
-  (function() {
-    const scrollHandler = () => {
-      // 存在有效锚点时，等待布局稳定后滚动到目标
-      // （浏览器原生锚点滚动发生在布局完成前，长文章的懒加载图片/异步组件会把目标顶偏）
-      const hash = window.location.hash;
-      if (hash.length > 1) {
-        let anchorId = hash.slice(1);
-        try {
-          anchorId = decodeURIComponent(anchorId);
-        } catch (e) {
-          // 片段含非法编码时按原样查找
-        }
-        const anchor = document.getElementById(anchorId);
-        if (anchor) {
-          // #start 锚点贴顶，不预留 offset；其余锚点与 TOC 点击滚动保持一致
-          const offset = anchorId === 'start' ? 0 : 32;
-          const targetY = () => anchor.getBoundingClientRect().top + window.scrollY - offset;
-          let timer = null;
-          let lastY = null;
-          let quiet = 0;
-          let attempts = 0;
-          // 记录最近一次资源加载完成时间，判断异步数据/图片是否仍在改变布局
-          let lastResourceTime = performance.now();
-          let observer = null;
-          try {
-            observer = new PerformanceObserver(function (list) {
-              lastResourceTime = performance.now();
-            });
-            observer.observe({ entryTypes: ['resource'] });
-          } catch (e) {}
-          // 统计进行中的 fetch/XHR 请求，异步组件（timeline 等）未完成前不判定布局稳定
-          let pendingRequests = 0;
-          const trackRequest = (fn) => {
-            pendingRequests++;
-            try {
-              const result = fn();
-              if (result && typeof result.finally === 'function') {
-                result.finally(function () {
-                  pendingRequests = Math.max(0, pendingRequests - 1);
-                });
-              } else {
-                pendingRequests = Math.max(0, pendingRequests - 1);
-              }
-              return result;
-            } catch (e) {
-              pendingRequests = Math.max(0, pendingRequests - 1);
-              throw e;
-            }
-          };
-          if (typeof window.fetch === 'function') {
-            const origFetch = window.fetch.bind(window);
-            window.fetch = function () {
-              const args = arguments;
-              return trackRequest(function () {
-                return origFetch.apply(window, args);
-              });
-            };
-          }
-          if (window.XMLHttpRequest) {
-            const origOpen = window.XMLHttpRequest.prototype.open;
-            const origSend = window.XMLHttpRequest.prototype.send;
-            window.XMLHttpRequest.prototype.open = function () {
-              this.__anchorTracked = true;
-              return origOpen.apply(this, arguments);
-            };
-            window.XMLHttpRequest.prototype.send = function () {
-              if (this.__anchorTracked) {
-                pendingRequests++;
-                const done = () => {
-                  if (this.__anchorTracked) {
-                    this.__anchorTracked = false;
-                    pendingRequests = Math.max(0, pendingRequests - 1);
-                  }
-                };
-                this.addEventListener('loadend', done);
-              }
-              return origSend.apply(this, arguments);
-            };
-          }
-          const cancel = () => {
-            if (timer !== null) {
-              clearInterval(timer);
-              timer = null;
-            }
-            if (observer !== null) {
-              try {
-                observer.disconnect();
-              } catch (e) {}
-            }
-          };
-          const adjust = () => {
-            const y = targetY();
-            const atTarget = Math.abs(window.scrollY - y) <= 2;
-            if (!atTarget || lastY === null || Math.abs(y - lastY) > 2) {
-              window.scrollTo({ top: y, behavior: 'instant' });
-              lastY = y;
-              quiet = 0;
-            } else {
-              quiet++;
-            }
-            attempts++;
-            const resourceQuiet = performance.now() - lastResourceTime > 3000;
-            // 位置连续 1.8 秒无变化、无进行中的请求且最近 3 秒无资源加载才视为稳定；最长等待 30 秒
-            if ((quiet >= 3 && pendingRequests === 0 && resourceQuiet) || attempts >= 50) {
-              cancel();
-            }
-          };
-          requestAnimationFrame(() => {
-            // 锚点链接打开时直接定位，不做动画；用户主动点击（如 TOC）仍走平滑滚动
-            window.scrollTo({ top: targetY(), behavior: 'instant' });
-            timer = setInterval(adjust, 600);
-          });
-          // 用户主动滚动时停止自动校正
-          window.addEventListener('wheel', cancel, { passive: true });
-          window.addEventListener('touchstart', cancel, { passive: true });
-          window.addEventListener('mousedown', cancel, { passive: true });
-          window.addEventListener('keydown', cancel, { passive: true });
-          return;
-        }
-      }
-      // 没有锚点时始终保持页面顶部；Wiki Hero 只在用户显式访问 #start 时定位正文。
-      window.scrollTo(0, 0);
-    };
-    if (document.readyState !== 'loading') scrollHandler();
-    else document.addEventListener('DOMContentLoaded', scrollHandler);
-  })();
-  const ctx = {
-    date_suffix: {
-      just: `刚刚`,
-      min: `分钟前`,
-      hour: `小时前`,
-      day: `天前`,
-    },
-    root : `/`,
-    tag_plugins: {
-      chat: Object.assign({"api":"https://siteinfo.listentothewind.cn/api/v1"}),
-    },
-    // 图标由构建期生成的 /js/stellar-icons.js 填充（defer，早于 DOMContentLoaded 就绪）
-    icons: {},
-    services: {"mdrender":{"js":"/js/services/mdrender.js"},"siteinfo":{"js":"/js/services/siteinfo.js","api":null},"ghinfo":{"js":"/js/services/ghinfo.js"},"rating":{"js":"/js/services/rating.js","api":"https://star-vote.xaox.cc/api/rating"},"vote":{"js":"/js/services/vote.js","api":"https://star-vote.xaox.cc/api/vote"},"sites":{"js":"/js/services/sites.js"},"friends":{"js":"/js/services/friends.js"},"friends_and_posts":{"js":"/js/services/friends_and_posts.js"},"timeline":{"js":"/js/services/timeline.js"},"fcircle":{"js":"/js/services/fcircle.js"},"weibo":{"js":"/js/services/weibo.js"},"memos":{"js":"/js/services/memos.js"},"voice":{"js":"/js/plugins/voice.js"},"video":{"js":"/js/plugins/video.js"},"download-file":{"js":"/js/plugins/download-file.js"},"twikoo":{"js":"/js/services/twikoo_latest_comment.js"},"waline":{"js":"/js/services/waline_latest_comment.js"},"artalk":{"js":"/js/services/artalk_latest_comment.js"},"giscus":{"js":"/js/services/giscus_latest_comment.js"},"contributors":{"edit_this_page":{"_posts/":null,"wiki/stellar/":"https://github.com/xaoxuu/hexo-theme-stellar-docs/blob/main/"},"js":"/js/services/contributors.js"},"rss":{"js":"/js/services/rss.js"}},
-  };
-
-  // required plugins (only load if needs)
-  if (`local_search`) {
-    ctx.search = {};
-    ctx.search.service = `local_search`;
-    if (ctx.search.service == 'local_search') {
-      let service_obj = Object.assign({}, `{"field":"all","path":"/search.json","content":true,"lazy_load":true,"cache_ttl":86400,"skip_search":null,"sort":"-date"}`);
-      ctx.search[ctx.search.service] = service_obj;
-    }
-  }
-  const def = {
-    avatar: `https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/avatar/round/3442075.svg`,
-    cover: `https://gcore.jsdelivr.net/gh/cdn-x/placeholder@1.0.12/cover/76b86c0226ffd.svg`,
-    data_cache: {"enable":true,"default_ttl":3600,"ttl":{"giscus":600,"waline":600,"artalk":600,"memos":600,"memos-user":86400,"sites":86400,"friends":86400,"friends_and_posts":86400,"siteinfo":86400},"max_entries":200},
-  };
-  const deps = {
-    marked: `https://gcore.jsdelivr.net/npm/marked@13.0/lib/marked.umd.min.js`,
-    lazyload: `https://gcore.jsdelivr.net/npm/vanilla-lazyload@19.1/dist/lazyload.min.js`
-  }
-
-  // 主题切换提示文案（供 /js/theme.js 使用）
-  window.__STELLAR_I18N__ = {
-    light: `切换到浅色模式`,
-    dark: `切换到深色模式`,
-    auto: `切换到跟随系统配色`,
-  };
-
-  // 搜索跳转高亮：URL 带 ?kw= 时按需加载，定位正文中的匹配词
-  (function () {
-    try {
-      if (!window.location.search) return;
-      if (!new URLSearchParams(window.location.search).has('kw')) return;
-      document.addEventListener('DOMContentLoaded', function () {
-        // utils 由 /js/utils.js 定义（同时暴露 window.utils）；
-        // 未就绪时由 bootstrap 队列兜底，此处按就绪状态判断
-        if (typeof utils === 'object' && typeof utils.js === 'function') {
-          utils.js('/js/search/highlight.js', { defer: true }).catch(function () {});
-        }
-      });
-    } catch (e) {}
-  })();
-</script>
-
-
-<script>
-  // 插件注册队列：utils.js 尚未就绪时先缓存注册请求，就绪后统一补跑，
-  // 保证解析期注册的插件不因加载时序丢失。
-  window.stellar = window.stellar || {};
-  window.stellar._pluginQueue = window.stellar._pluginQueue || [];
-  window.stellar.initPlugin = function (fn, name, options) {
-    if (typeof utils === 'object' && typeof utils.initPlugin === 'function') {
-      return utils.initPlugin(fn, name, options);
-    }
-    window.stellar._pluginQueue.push({ fn: fn, name: name, options: options || {} });
-  };
-  window.stellar._flushPlugins = function () {
-    var pending = window.stellar._pluginQueue.splice(0);
-    if (typeof utils !== 'object' || typeof utils.initPlugin !== 'function') return;
-    for (var i = 0; i < pending.length; i++) {
-      try {
-        utils.initPlugin(pending[i].fn, pending[i].name, pending[i].options);
-      } catch (e) {
-        console.error('[Stellar] 插件补注册失败:', e);
-      }
-    }
-  };
-  document.addEventListener('DOMContentLoaded', function () {
-    if (typeof utils === 'object') return;
-    // utils 未就绪时补载；加载成功后由 utils.js 内部补跑插件队列
-    var s = document.createElement('script');
-    // 用 setAttribute 赋值 src，避免被基于 `s.src = "..."` 的正则
-    // （图片懒加载 / 脚本延迟优化器）误改写
-    s.setAttribute('src', '/js/utils.js?v=1.44.0');
-    s.async = false;
-    s.onerror = function () {
-      console.error('[Stellar] 无法加载 /js/utils.js，已启用内容兜底显示（sr-fallback）');
-      document.documentElement.classList.add('sr-fallback');
-    };
-    document.head.appendChild(s);
-  });
-</script>
-
-
-<!-- core: utils 必须同步加载（页尾内联插件片段在解析期即调用 utils.initPlugin） -->
-<script src="/js/utils.js?v=1.44.0"></script>
-<script>
-  // 解析期检测 utils 是否已就绪；未就绪时同步补载，
-  // 保证「utils 先于页尾插件片段定义」的不变量。
-  if (typeof utils === 'undefined') {
-    document.write('<script src="/js/utils.js?v=1.44.0"><\/script>');
-  }
-</script>
-<script defer src="/js/stellar-icons.js?v=1.44.0"></script>
-<!-- 非首屏图标异步加载：占位符替换依赖构建期生成的 js/icons/{ns}.json -->
-<script defer src="/js/icons.js?v=1.44.0" data-version="1.44.0"></script>
-<script defer src="/js/plugins/dropdown.js?v=1.44.0"></script>
-<script src="/js/main.js?v=1.44.0" defer></script>
-<script defer src="/js/theme.js?v=1.44.0"></script>
-
-
-
-<script>
-  // 先声明配置与初始化监听，再异步加载库：
-  // 保证库执行时 lazyLoadOptions 已就绪，避免 async 脚本抢先执行导致自初始化失败
-  // https://www.npmjs.com/package/vanilla-lazyload
-  // Set the options globally
-  // to make LazyLoad self-initialize
-  window.lazyLoadOptions = {
-    elements_selector: ".lazy",
-    callback_loaded: (el) => {
-      el.classList.add('loaded');
-      // {% image %} 没有 .lazy-box 包裹，回退到父元素查找加载图标
-      const wrapper = el.closest('.lazy-box') || el.parentElement;
-      const icon = wrapper?.querySelector('.lazy-icon');
-      if (icon) icon.remove();
-    }
-  };
-  // 监听初始化事件，获取 LazyLoad 实例
-  window.addEventListener(
-    "LazyLoad::Initialized",
-    function (event) {
-      window.lazyLoadInstance = event.detail.instance;
-    },
-    false
+  setTimeout(
+    Log.bind(
+      console,
+      `\n%c${ascll[0]} %c ${ascll[1]} %c ${ascll[2]} %c${ascll[3]}%c ${ascll[4]}%c ${ascll[5]}\n\n%c ${ascll[6]}\n`,
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      "color:#425AEF",
+      "",
+      "color:#425AEF",
+      ""
+    )
   );
-  document.addEventListener('DOMContentLoaded', function () {
-    window.lazyLoadInstance?.update();
-  });
+  setTimeout(
+    Log.bind(
+      console,
+      `%c ${ascll2[0]} %c ${ascll2[1]} %c \n${ascll2[2]} %c\n${ascll2[3]}\n`,
+      "color:white; background-color:#4fd953",
+      "",
+      "",
+      'background:url("https://npm.elemecdn.com/anzhiyu-blog@1.1.6/img/post/common/tinggge.gif") no-repeat;font-size:450%'
+    )
+  );
 
-  // 兜底：动态插入的 .lazy 元素（如站点自定义脚本在 update() 之后追加的图片）
-  // 不会被 vanilla-lazyload 自动扫描，未注册的 img.lazy 会被 CSS opacity:0 永久隐藏。
-  // MutationObserver 检测到新增 .lazy 元素后自动调用 update() 重新注册。
-  if (window.MutationObserver) {
-    window.lazyMutationObserver = new MutationObserver((mutations) => {
-      if (window.lazyMutationObserver._pending) return;
-      const hasLazy = mutations.some((m) =>
-        Array.prototype.some.call(m.addedNodes, (node) =>
-          node.nodeType === 1 &&
-          (node.matches?.('.lazy') || !!node.querySelector?.('.lazy'))
-        )
-      );
-      if (!hasLazy) return;
-      window.lazyMutationObserver._pending = requestAnimationFrame(() => {
-        window.lazyMutationObserver._pending = null;
-        window.lazyLoadInstance?.update();
-      });
-    });
-    window.lazyMutationObserver.observe(document.documentElement, {
-      childList: true,
-      subtree: true
-    });
-  }
+  setTimeout(Log.bind(console, "%c WELCOME %c 你好，小笨蛋.", "color:white; background-color:#4f90d9", ""));
 
-  window.wrapLazyloadImages = (container) => {
-    if (typeof container === 'string') {
-      container = document.querySelector(container);
-    }
-    if (!container) return;
+  setTimeout(
+    console.warn.bind(
+      console,
+      "%c ⚡ Powered by 安知鱼 %c 你正在访问 Tianzi666-coder 的博客.",
+      "color:white; background-color:#f0ad4e",
+      ""
+    )
+  );
 
-    const images = container.querySelectorAll('img');
-    images.forEach((img) => {
-      if (img.classList.contains('lazy')) return;
+  setTimeout(Log.bind(console, "%c W23-12 %c 你已打开控制台.", "color:white; background-color:#4f90d9", ""));
 
-      const src = img.getAttribute('src');
-      if (!src) return;
+  setTimeout(
+    console.warn.bind(console, "%c S013-782 %c 你现在正处于监控中.", "color:white; background-color:#d9534f", "")
+  );
+});</script><script async src="/anzhiyu/random.js"></script><div class="js-pjax"><input type="hidden" name="page-type" id="page-type" value="post"></div><script>var visitorMail = "";
+</script><script async data-pjax src="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/waterfall/waterfall.js"></script><script src="https://cdn.cbd.int/qrcodejs@1.0.0/qrcode.min.js"></script><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.1.9/icon/ali_iconfont_css.css"><link rel="stylesheet" href="https://cdn.cbd.int/anzhiyu-theme-static@1.0.0/aplayer/APlayer.min.css" media="print" onload="this.media='all'"><script src="https://cdn.cbd.int/anzhiyu-blog-static@1.0.1/js/APlayer.min.js"></script><script src="https://cdn.cbd.int/hexo-anzhiyu-music@1.0.1/assets/js/Meting2.min.js"></script><script src="https://cdn.cbd.int/pjax@0.2.8/pjax.min.js"></script><script>let pjaxSelectors = ["head > title","#config-diff","#body-wrap","#rightside-config-hide","#rightside-config-show",".js-pjax"]
+var pjax = new Pjax({
+  elements: 'a:not([target="_blank"])',
+  selectors: pjaxSelectors,
+  cacheBust: false,
+  analytics: false,
+  scrollRestoration: false
+})
 
-      const wrapper = document.createElement('div');
-      wrapper.className = 'lazy-box';
+document.addEventListener('pjax:send', function () {
+  // removeEventListener scroll 
+  anzhiyu.removeGlobalFnEvent('pjax')
+  anzhiyu.removeGlobalFnEvent('themeChange')
 
-      const newImg = img.cloneNode();
-      newImg.removeAttribute('src');
-      newImg.setAttribute('data-src', src);
-      newImg.classList.add('lazy');
-
-      const icon = document.createElement('div');
-      icon.className = 'lazy-icon';
-
-      wrapper.appendChild(newImg);
-      wrapper.appendChild(icon);
-
-      img.replaceWith(wrapper);
-    });
-
-    // 通知 LazyLoad 更新
-    if (window.lazyLoadInstance?.update) {
-      window.lazyLoadInstance.update();
-    }
-  }
-</script>
-<script async src="https://gcore.jsdelivr.net/npm/vanilla-lazyload@19.1/dist/lazyload.min.js"></script>
-
-
-<!-- optional -->
-
-
-
-<script defer src="/js/services.js?v=1.44.0"></script>
-<script>
-  // 防御：bootstrap 被第三方优化器改写/移除导致 window.stellar.initPlugin 缺失时，
-  // 在此补一个等价注册点：utils 就绪时直接委托，未就绪时入队，utils 加载后自动补跑。
-  if (typeof window.stellar === 'undefined' || typeof window.stellar.initPlugin !== 'function') {
-    window.stellar = window.stellar || {};
-    window.stellar._pluginQueue = window.stellar._pluginQueue || [];
-    window.stellar.initPlugin = function (fn, name, options) {
-      if (typeof utils === 'object' && typeof utils.initPlugin === 'function') {
-        return utils.initPlugin(fn, name, options);
-      }
-      window.stellar._pluginQueue.push({ fn: fn, name: name, options: options || {} });
-    };
-    window.stellar._flushPlugins = function () {
-      var pending = window.stellar._pluginQueue.splice(0);
-      if (typeof utils !== 'object' || typeof utils.initPlugin !== 'function') return;
-      for (var i = 0; i < pending.length; i++) {
-        try {
-          utils.initPlugin(pending[i].fn, pending[i].name, pending[i].options);
-        } catch (e) {
-          console.error('[Stellar] 插件补注册失败:', e);
-        }
-      }
-    };
-  }
-</script>
-
-<script>window.addEventListener('DOMContentLoaded', function () { utils.js('/js/search/shortcut.js', { defer: true }); });</script><script>
-  window.addEventListener('DOMContentLoaded', (event) => {
-    ctx.search = Object.assign({}, ctx.search, {
-      path: `/search.json`,
-      local_search: {"field":"all","path":"/search.json","content":true,"lazy_load":true,"cache_ttl":86400,"skip_search":null,"sort":"-date"},
-    });
-    utils.js('/js/search/local-search.js', { defer: true });
-  });
-</script>
-<script>
-  window.FPConfig = {
-    delay: 0,
-    ignoreKeywords: [],
-    maxRPS: 5,
-    hoverDelay: 25
-  };
-</script>
-<script defer src="https://gcore.jsdelivr.net/npm/flying-pages@2/flying-pages.min.js"></script><script>
-  ctx.fancybox = {
-    mode: `auto`,
-    selector: `.timenode p>img`,
-    css: `https://gcore.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.css`,
-    js: `https://gcore.jsdelivr.net/npm/@fancyapps/ui@5.0/dist/fancybox/fancybox.umd.js`
-  };
-  // auto=按需：页面存在可弹窗图片才加载；global=全局：所有页面加载
-  const isGlobal = ctx.fancybox.mode === 'global';
-  // 评论区图片（artalk/twikoo/waline）显示较小，自动支持放大；
-  // 仅绑定各评论服务的评论内容区，编辑器、表情面板等非内容区图片不弹窗
-  var selector = '[data-fancybox]:not(.error), .with-fancybox .atk-content img:not([atk-emoticon]):not([class*="emo"]), .with-fancybox .tk-content img:not([atk-emoticon]):not([class*="emo"]), .with-fancybox .wl-content img:not([atk-emoticon]):not([class*="emo"])';
-  if (ctx.fancybox.selector) {
-    selector += `, ${ctx.fancybox.selector}`
-  }
-  var needFancybox = isGlobal;
-  if (!needFancybox) {
-    needFancybox = document.querySelectorAll(selector).length !== 0;
-    if (!needFancybox) {
-      // 图片型评论系统容器：评论区图片小图需要 fancybox
-      const withFancybox = document.getElementsByClassName('with-fancybox');
-      if (withFancybox != undefined && withFancybox.length > 0) {
-        needFancybox = true;
-      }
-    }
-    if (!needFancybox) {
-      // 动态数据服务：memos 渲染的图片需要 fancybox
-      const memos = document.getElementsByClassName('ds-memos');
-      if (memos != undefined && memos.length > 0) {
-        needFancybox = true;
+  document.getElementById('rightside').classList.remove('rightside-show')
+  
+  if (window.aplayers) {
+    for (let i = 0; i < window.aplayers.length; i++) {
+      if (!window.aplayers[i].options.fixed) {
+        window.aplayers[i].destroy()
       }
     }
   }
-  if (needFancybox) {
-    utils.css(`/css/plugins/fancybox.css?v=1.44.0`);
-    utils.css(ctx.fancybox.css);
-    utils.js(ctx.fancybox.js, { defer: true }).then(function () {
-      if (isGlobal) {
-        // 全局模式：正文所有非内联图片均可弹窗
-        selector += ', .md-text img:not(.inline):not([atk-emoticon])';
-      }
-      Fancybox.bind(selector, {
-        hideScrollbar: false,
-        Thumbs: {
-          autoStart: false,
-        },
-        caption: (fancybox, slide) => {
-          return slide.triggerEl.alt || slide.triggerEl.dataset.caption || null
-        }
-      });
-    })
+
+  typeof typed === 'object' && typed.destroy()
+
+  //reset readmode
+  const $bodyClassList = document.body.classList
+  $bodyClassList.contains('read-mode') && $bodyClassList.remove('read-mode')
+})
+
+document.addEventListener('pjax:complete', function () {
+  window.refreshFn()
+
+  document.querySelectorAll('script[data-pjax]').forEach(item => {
+    const newScript = document.createElement('script')
+    const content = item.text || item.textContent || item.innerHTML || ""
+    Array.from(item.attributes).forEach(attr => newScript.setAttribute(attr.name, attr.value))
+    newScript.appendChild(document.createTextNode(content))
+    item.parentNode.replaceChild(newScript, item)
+  })
+
+  GLOBAL_CONFIG.islazyload && window.lazyLoadInstance.update()
+
+  typeof panguInit === 'function' && panguInit()
+
+  // google analytics
+  typeof gtag === 'function' && gtag('config', '', {'page_path': window.location.pathname});
+
+  // baidu analytics
+  typeof _hmt === 'object' && _hmt.push(['_trackPageview',window.location.pathname]);
+
+  typeof loadMeting === 'function' && document.getElementsByClassName('aplayer').length && loadMeting()
+
+  // prismjs
+  typeof Prism === 'object' && Prism.highlightAll()
+})
+
+document.addEventListener('pjax:error', e => {
+  if (e.request.status === 404) {
+    pjax.loadUrl('/404.html')
   }
-</script>
-<script>
-  stellar.initPlugin(() => {
-    const swiper_api = document.getElementById('swiper-api');
-    if (swiper_api != undefined) {
-      utils.css(`/css/plugins/swiper.css?v=1.44.0`);
-      utils.css(`https://unpkg.com/swiper@10.3/swiper-bundle.min.css`);
-      utils.js(`https://unpkg.com/swiper@10.3/swiper-bundle.min.js`, { defer: true }).then(function () {
-        const effect = swiper_api.getAttribute('effect') || '';
-        var swiper = new Swiper('.swiper#swiper-api', {
-          slidesPerView: 'auto',
-          spaceBetween: 8,
-          centeredSlides: true,
-          effect: effect,
-          rewind: true,
-          pagination: {
-            el: '.swiper-pagination',
-            clickable: true,
-          },
-          navigation: {
-            nextEl: '.swiper-button-next',
-            prevEl: '.swiper-button-prev',
-          },
-        });
-      })
-    }
-  }, 'swiper');
-</script>
-<script>
-  (function () {
-    // 兜底看门狗独立于插件初始化：3 秒内未完成 reveal 时强制显示 .slide-up 内容
-    let fallbackApplied = false;
-    const revealFallback = () => {
-      if (fallbackApplied) return;
-      fallbackApplied = true;
-      document.documentElement.classList.add('sr-fallback');
-    };
-    const watchdog = setTimeout(() => revealFallback(), 3000);
-
-    stellar.initPlugin(() => {
-      const els = Array.prototype.slice.call(document.querySelectorAll('.slide-up'));
-      if (els.length === 0) {
-        clearTimeout(watchdog);
-        return;
-      }
-
-    // 吸顶/固定定位容器内的元素始终在视口内（或由容器控制显隐），
-    // 但 ScrollReveal 按文档坐标判断可见性，会误判这类元素为不可见，
-    // 导致带锚点/恢复滚动位置打开页面时组件一直不显示。
-    // 解决方式：以最近的吸顶/固定祖先作为该组元素的容器，
-    // 使可见性判断恒成立，入场动画保留且不再依赖主文档滚动。
-    const findPinnedContainer = (el) => {
-      let node = el;
-      while (node && node.nodeType === 1) {
-        const pos = window.getComputedStyle(node).position;
-        if (pos === 'sticky' || pos === 'fixed') return node;
-        node = node.parentElement;
-      }
-      return null;
-    };
-
-    // 最近的滚动容器（overflow-y: auto/scroll）
-    // 吸顶容器内可能存在内部滚动容器（如侧栏 .widgets），
-    // 若直接用吸顶容器做 reveal 容器，折叠区下方的元素永远不会进入视口，导致一直不显示。
-    const findScrollContainer = (el) => {
-      let node = el.parentElement;
-      while (node && node.nodeType === 1) {
-        const oy = window.getComputedStyle(node).overflowY;
-        if (oy === 'auto' || oy === 'scroll') return node;
-        node = node.parentElement;
-      }
-      return null;
-    };
-
-    const pinnedGroups = new Map(); // 容器 -> 元素列表
-    const targets = [];
-    els.forEach((el) => {
-      const pinned = findPinnedContainer(el);
-      if (pinned) {
-        // 优先使用最近的滚动容器，其次才用吸顶容器
-        const container = findScrollContainer(el) || pinned;
-        const group = pinnedGroups.get(container) || [];
-        group.push(el);
-        pinnedGroups.set(container, group);
-      } else {
-        targets.push(el);
-      }
-    });
-    if (pinnedGroups.size === 0 && targets.length === 0) {
-      clearTimeout(watchdog);
-      return;
-    }
-
-    const slideUp = {
-      distance: `8px`,
-      duration: `1000`,
-      interval: `100`,
-      scale: `1`,
-      opacity: 0,
-      easing: "ease-out"
-    };
-
-    utils.js(`https://gcore.jsdelivr.net/npm/scrollreveal@4.0/dist/scrollreveal.min.js`, { defer: true })
-      .then(() => {
-        if (fallbackApplied) return;
-        if (typeof ScrollReveal !== 'function') {
-          revealFallback();
-          return;
-        }
-        try {
-          const sr = ScrollReveal();
-          if (targets.length > 0) {
-            sr.reveal(targets, { ...slideUp });
-          }
-          pinnedGroups.forEach((group, container) => {
-            sr.reveal(group, { ...slideUp, container: container });
-          });
-          clearTimeout(watchdog);
-        } catch (err) {
-          console.error('[Plugin scrollreveal] 初始化失败:', err);
-          revealFallback();
-        }
-      })
-      .catch((err) => {
-        console.error('[Plugin scrollreveal] 加载失败:', err);
-        revealFallback();
-      });
-    }, 'scrollreveal');
-  })();
-</script>
-<script>
-  stellar.initPlugin(() => {
-    const codeElements = document.querySelectorAll('.code');
-    if (codeElements.length > 0) {
-      ctx.copycode = {
-        default_text: `Copy`,
-        success_text: `Copied`,
-        toast: `复制成功`,
-      };
-      utils.js('/js/plugins/copycode.js', { defer: true }).then(() => {
-        if (typeof createCopyButtons === 'function') {
-          createCopyButtons(codeElements);
-        }
-      });
-    }
-  }, 'copycode');
-</script>
-<script>
-  stellar.initPlugin(() => {
-    const els = Array.prototype.slice.call(document.querySelectorAll('[data-text-adaptive]'));
-    if (els.length === 0) return;
-    utils.js('/js/color.js').then(() => utils.js('/js/plugins/adaptive-text.js')).then(() => {
-      if (typeof applyAdaptiveText === 'function') {
-        applyAdaptiveText(els);
-      }
-    });
-  }, 'adaptive-text');
-</script>
-
-
-
-<!-- inject -->
-
-</div></body></html>
+})</script><script charset="UTF-8" src="https://cdn.cbd.int/anzhiyu-theme-static@1.1.5/accesskey/accesskey.js"></script></div><div id="popup-window"><div class="popup-window-title">通知</div><div class="popup-window-divider"></div><div class="popup-window-content"><div class="popup-tip">你好呀</div><div class="popup-link"><i class="anzhiyufont anzhiyu-icon-arrow-circle-right"></i></div></div></div></body></html>
