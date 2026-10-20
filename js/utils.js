@@ -1,1453 +1,741 @@
-const anzhiyu = {
-  debounce: (func, wait = 0, immediate = false) => {
-    let timeout;
-    return (...args) => {
-      const later = () => {
-        timeout = null;
-        if (!immediate) func(...args);
+(function () {
+  // 防重复执行：utils.js 可能被重复加载，二次执行直接跳过，避免重复声明报错。
+  if (window.__stellarUtilsLoaded) return;
+  window.__stellarUtilsLoaded = true;
+
+  function RunItem() {
+    this.list = []; // 存放回调函数
+    this.start = () => {
+      for (var i = 0; i < this.list.length; i++) {
+        this.list[i].run();
+      }
+    };
+    this.push = (fn, name, setRequestAnimationFrame = true) => {
+      let myfn = fn
+      if (setRequestAnimationFrame) {
+        myfn = () => {
+          utils.requestAnimationFrame(fn)
+        }
+      }
+      var f = new Item(myfn, name);
+      this.list.push(f);
+    };
+    this.remove = (name) => {
+      // 倒序遍历避免 splice 后的索引问题
+      for (let index = this.list.length - 1; index >= 0; index--) {
+        const e = this.list[index];
+        if (e.name === name) {
+          this.list.splice(index, 1);
+        }
+      }
+    }
+    // 构造一个可以run的对象
+    function Item(fn, name) {
+      // 函数名称
+      this.name = name || fn.name;
+      // run方法
+      this.run = () => {
+        try {
+          fn()
+        } catch (error) {
+          console.log(error);
+        }
       };
-      const callNow = immediate && !timeout;
-      clearTimeout(timeout);
-      timeout = setTimeout(later, wait);
-      if (callNow) func(...args);
-    };
-  },
-
-  throttle: function (func, wait, options = {}) {
-    let timeout, context, args;
-    let previous = 0;
-
-    const later = () => {
-      previous = options.leading === false ? 0 : new Date().getTime();
-      timeout = null;
-      func.apply(context, args);
-      if (!timeout) context = args = null;
-    };
-
-    const throttled = (...params) => {
-      const now = new Date().getTime();
-      if (!previous && options.leading === false) previous = now;
-      const remaining = wait - (now - previous);
-      context = this;
-      args = params;
-      if (remaining <= 0 || remaining > wait) {
-        if (timeout) {
-          clearTimeout(timeout);
-          timeout = null;
-        }
-        previous = now;
-        func.apply(context, args);
-        if (!timeout) context = args = null;
-      } else if (!timeout && options.trailing !== false) {
-        timeout = setTimeout(later, remaining);
-      }
-    };
-
-    return throttled;
-  },
-
-  sidebarPaddingR: () => {
-    const innerWidth = window.innerWidth;
-    const clientWidth = document.body.clientWidth;
-    const paddingRight = innerWidth - clientWidth;
-    if (innerWidth !== clientWidth) {
-      document.body.style.paddingRight = paddingRight + "px";
     }
-  },
+  }
 
-  snackbarShow: (text, showActionFunction = false, duration = 2000, actionText = false) => {
-    const { position, bgLight, bgDark } = GLOBAL_CONFIG.Snackbar;
-    const bg = document.documentElement.getAttribute("data-theme") === "light" ? bgLight : bgDark;
-    const root = document.querySelector(":root");
-    root.style.setProperty("--anzhiyu-snackbar-time", duration + "ms");
+  const utils = {
+    // 已加载样式缓存
+    _loadedStyles: new Set(),
 
-    Snackbar.show({
-      text: text,
-      backgroundColor: bg,
-      onActionClick: showActionFunction,
-      actionText: actionText,
-      showAction: actionText,
-      duration: duration,
-      pos: position,
-      customClass: "snackbar-css",
-    });
-  },
-
-  loadComment: (dom, callback) => {
-    if ("IntersectionObserver" in window) {
-      const observerItem = new IntersectionObserver(
-        entries => {
-          if (entries[0].isIntersecting) {
-            callback();
-            observerItem.disconnect();
+    // 懒加载 css https://github.com/filamentgroup/loadCSS
+    css: (href, before, media, attributes) => {
+      // 如果样式已加载，直接返回 null
+      if (utils._loadedStyles.has(href)) {
+        return null;
+      }
+      var doc = window.document;
+      var ss = doc.createElement("link");
+      var ref;
+      if (before) {
+        ref = before;
+      } else {
+        var refs = (doc.body || doc.getElementsByTagName("head")[0]).childNodes;
+        ref = refs[refs.length - 1];
+      }
+      var sheets = doc.styleSheets;
+      if (attributes) {
+        for (var attributeName in attributes) {
+          if (Object.prototype.hasOwnProperty.call(attributes, attributeName)) {
+            ss.setAttribute(attributeName, attributes[attributeName]);
           }
-        },
-        { threshold: [0] }
-      );
-      observerItem.observe(dom);
-    } else {
-      callback();
-    }
-  },
-
-  scrollToDest: (pos, time = 500) => {
-    const currentPos = window.pageYOffset;
-    if ("scrollBehavior" in document.documentElement.style) {
-      window.scrollTo({
-        top: pos,
-        behavior: "smooth",
-      });
-      return;
-    }
-
-    let start = null;
-    pos = +pos;
-    window.requestAnimationFrame(function step(currentTime) {
-      start = !start ? currentTime : start;
-      const progress = currentTime - start;
-      if (currentPos < pos) {
-        window.scrollTo(0, ((pos - currentPos) * progress) / time + currentPos);
-      } else {
-        window.scrollTo(0, currentPos - ((currentPos - pos) * progress) / time);
+        }
       }
-      if (progress < time) {
-        window.requestAnimationFrame(step);
-      } else {
-        window.scrollTo(0, pos);
-      }
-    });
-  },
-
-  initJustifiedGallery: function (selector) {
-    const runJustifiedGallery = i => {
-      if (!anzhiyu.isHidden(i)) {
-        fjGallery(i, {
-          itemSelector: ".fj-gallery-item",
-          rowHeight: i.getAttribute("data-rowHeight"),
-          gutter: 4,
-          onJustify: function () {
-            this.$container.style.opacity = "1";
-          },
+      ss.rel = "stylesheet";
+      ss.href = href;
+      ss.media = "only x";
+      // 标记样式为已加载 (在创建元素后立即标记，防止重复创建)
+      utils._loadedStyles.add(href);
+      function ready(cb) {
+        if (doc.body) {
+          return cb();
+        }
+        setTimeout(function () {
+          ready(cb);
         });
       }
-    };
-
-    if (Array.from(selector).length === 0) runJustifiedGallery(selector);
-    else
-      selector.forEach(i => {
-        runJustifiedGallery(i);
+      ready(function () {
+        ref.parentNode.insertBefore(ss, before ? ref : ref.nextSibling);
       });
-  },
-
-  animateIn: (ele, text) => {
-    ele.style.display = "block";
-    ele.style.animation = text;
-  },
-
-  animateOut: (ele, text) => {
-    ele.addEventListener("animationend", function f() {
-      ele.style.display = "";
-      ele.style.animation = "";
-      ele.removeEventListener("animationend", f);
-    });
-    ele.style.animation = text;
-  },
-
-  /**
-   * @param {*} selector
-   * @param {*} eleType the type of create element
-   * @param {*} options object key: value
-   */
-  wrap: (selector, eleType, options) => {
-    const creatEle = document.createElement(eleType);
-    for (const [key, value] of Object.entries(options)) {
-      creatEle.setAttribute(key, value);
-    }
-    selector.parentNode.insertBefore(creatEle, selector);
-    creatEle.appendChild(selector);
-  },
-
-  isHidden: ele => ele.offsetHeight === 0 && ele.offsetWidth === 0,
-
-  getEleTop: ele => {
-    let actualTop = ele.offsetTop;
-    let current = ele.offsetParent;
-
-    while (current !== null) {
-      actualTop += current.offsetTop;
-      current = current.offsetParent;
-    }
-
-    return actualTop;
-  },
-
-  loadLightbox: ele => {
-    const service = GLOBAL_CONFIG.lightbox;
-
-    if (service === "mediumZoom") {
-      const zoom = mediumZoom(ele);
-      zoom.on("open", e => {
-        const photoBg = document.documentElement.getAttribute("data-theme") === "dark" ? "#121212" : "#fff";
-        zoom.update({
-          background: photoBg,
+      var onloadcssdefined = function (cb) {
+        var resolvedHref = ss.href;
+        var i = sheets.length;
+        while (i--) {
+          if (sheets[i].href === resolvedHref) {
+            return cb();
+          }
+        }
+        setTimeout(function () {
+          onloadcssdefined(cb);
         });
-      });
-    }
+      };
+      function loadCB() {
+        if (ss.addEventListener) {
+          ss.removeEventListener("load", loadCB);
+        }
+        ss.media = media || "all";
+      }
+      if (ss.addEventListener) {
+        ss.addEventListener("load", loadCB);
+      }
+      ss.onloadcssdefined = onloadcssdefined;
+      onloadcssdefined(loadCB);
+      return ss;
+    },
 
-    if (service === "fancybox") {
-      Array.from(ele).forEach(i => {
-        if (i.parentNode.tagName !== "A") {
-          const dataSrc = i.dataset.lazySrc || i.src;
-          const dataCaption = i.title || i.alt || "";
-          anzhiyu.wrap(i, "a", {
-            href: dataSrc,
-            "data-fancybox": "gallery",
-            "data-caption": dataCaption,
-            "data-thumb": dataSrc,
+    // 已加载脚本缓存
+    _loadedScripts: new Set(),
+
+    // 已加载元素缓存 (使用 WeakSet 追踪元素实例,避免重复加载)
+    _loadedElements: new WeakSet(),
+
+    js: (src, opt) => new Promise((resolve, reject) => {
+      if (src.startsWith('/')) {
+        src = ctx.root + src.substring(1);
+      }
+      // 如果脚本已加载，直接返回
+      if (utils._loadedScripts.has(src)) {
+        resolve();
+        return;
+      }
+      var script = document.createElement('script');
+      script.src = src;
+      if (opt) {
+        for (let key of Object.keys(opt)) {
+          script[key] = opt[key]
+        }
+      } else {
+        // 默认异步，如果需要同步，第二个参数传入 {} 即可
+        script.async = true
+      }
+      script.onerror = reject
+      script.onload = script.onreadystatechange = function () {
+        const loadState = this.readyState
+        if (loadState && loadState !== 'loaded' && loadState !== 'complete') return
+        script.onload = script.onreadystatechange = null
+        utils._loadedScripts.add(src);
+        resolve()
+      }
+      document.head.appendChild(script)
+    }),
+
+    // 原生 DOM 工具：querySelector / querySelectorAll 简写
+    qs: (sel, ctx) => (ctx || document).querySelector(sel),
+    qsa: (sel, ctx) => Array.prototype.slice.call((ctx || document).querySelectorAll(sel)),
+
+    // 原生 DOM 封装：常用 DOM 操作方法子集（find/append/class/attr/事件等）
+    dom: (selector, ctx) => {
+      var els = [];
+      if (typeof selector === 'string') {
+        els = utils.qsa(selector, ctx);
+      } else if (selector && selector.nodeType === 1) {
+        els = [selector];
+      } else if (selector && typeof selector.length === 'number') {
+        els = Array.prototype.slice.call(selector);
+      }
+      var api = {
+        length: els.length,
+        each: function (fn) {
+          els.forEach(function (el, i) {
+            fn.call(el, i, el);
           });
-        }
-      });
-
-      if (!window.fancyboxRun) {
-        Fancybox.bind("[data-fancybox]", {
-          Hash: false,
-          Thumbs: {
-            autoStart: false,
-          },
-        });
-        window.fancyboxRun = true;
-      }
-    }
-  },
-
-  setLoading: {
-    add: ele => {
-      const html = `
-        <div class="loading-container">
-          <div class="loading-item">
-            <div></div><div></div><div></div><div></div><div></div>
-          </div>
-        </div>
-      `;
-      ele.insertAdjacentHTML("afterend", html);
-    },
-    remove: ele => {
-      ele.nextElementSibling.remove();
-    },
-  },
-
-  updateAnchor: anchor => {
-    if (anchor !== window.location.hash) {
-      if (!anchor) anchor = location.pathname;
-      const title = GLOBAL_CONFIG_SITE.title;
-      window.history.replaceState(
-        {
-          url: location.href,
-          title,
+          return api;
         },
-        title,
-        anchor
-      );
-    }
-  },
-
-  getScrollPercent: (currentTop, ele) => {
-    const docHeight = ele.clientHeight;
-    const winHeight = document.documentElement.clientHeight;
-    const headerHeight = ele.offsetTop;
-    const contentMath =
-      docHeight > winHeight ? docHeight - winHeight : document.documentElement.scrollHeight - winHeight;
-    const scrollPercent = (currentTop - headerHeight) / contentMath;
-    const scrollPercentRounded = Math.round(scrollPercent * 100);
-    const percentage = scrollPercentRounded > 100 ? 100 : scrollPercentRounded <= 0 ? 0 : scrollPercentRounded;
-    return percentage;
-  },
-
-  addGlobalFn: (key, fn, name = false, parent = window) => {
-    const globalFn = parent.globalFn || {};
-    const keyObj = globalFn[key] || {};
-
-    if (name && keyObj[name]) return;
-
-    name = name || Object.keys(keyObj).length;
-    keyObj[name] = fn;
-    globalFn[key] = keyObj;
-    parent.globalFn = globalFn;
-  },
-
-  addEventListenerPjax: (ele, event, fn, option = false) => {
-    ele.addEventListener(event, fn, option);
-    anzhiyu.addGlobalFn("pjax", () => {
-      ele.removeEventListener(event, fn, option);
-    });
-  },
-
-  removeGlobalFnEvent: (key, parent = window) => {
-    const { globalFn = {} } = parent;
-    const keyObj = globalFn[key] || {};
-    const keyArr = Object.keys(keyObj);
-    if (!keyArr.length) return;
-    keyArr.forEach(i => {
-      keyObj[i]();
-    });
-    delete parent.globalFn[key];
-  },
-
-  //更改主题色
-  changeThemeMetaColor: function (color) {
-    // console.info(`%c ${color}`, `font-size:36px;color:${color};`);
-    if (themeColorMeta !== null) {
-      themeColorMeta.setAttribute("content", color);
-    }
-  },
-
-  //顶栏自适应主题色
-  initThemeColor: function () {
-    let themeColor = getComputedStyle(document.documentElement)
-      .getPropertyValue("--anzhiyu-bar-background")
-      .trim()
-      .replace('"', "")
-      .replace('"', "");
-    const currentTop = window.scrollY || document.documentElement.scrollTop;
-    if (currentTop > 26) {
-      if (anzhiyu.is_Post()) {
-        themeColor = getComputedStyle(document.documentElement)
-          .getPropertyValue("--anzhiyu-meta-theme-post-color")
-          .trim()
-          .replace('"', "")
-          .replace('"', "");
-      }
-      if (themeColorMeta.getAttribute("content") === themeColor) return;
-      this.changeThemeMetaColor(themeColor);
-    } else {
-      if (themeColorMeta.getAttribute("content") === themeColor) return;
-      this.changeThemeMetaColor(themeColor);
-    }
-  },
-  //是否是文章页
-  is_Post: function () {
-    var url = window.location.href; //获取url
-    if (url.indexOf("/posts/") >= 0) {
-      //判断url地址中是否包含code字符串
-      return true;
-    } else {
-      return false;
-    }
-  },
-  //监测是否在页面开头
-  addNavBackgroundInit: function () {
-    var scrollTop = 0,
-      bodyScrollTop = 0,
-      documentScrollTop = 0;
-    if ($bodyWrap) {
-      bodyScrollTop = $bodyWrap.scrollTop;
-    }
-    if (document.documentElement) {
-      documentScrollTop = document.documentElement.scrollTop;
-    }
-    scrollTop = bodyScrollTop - documentScrollTop > 0 ? bodyScrollTop : documentScrollTop;
-
-    if (scrollTop != 0) {
-      pageHeaderEl.classList.add("nav-fixed");
-      pageHeaderEl.classList.add("nav-visible");
-    }
-  },
-  // 下载图片
-  downloadImage: function (imgsrc, name) {
-    //下载图片地址和图片名
-    rm.hideRightMenu();
-    if (rm.downloadimging == false) {
-      rm.downloadimging = true;
-      anzhiyu.snackbarShow("正在下载中，请稍后", false, 10000);
-      setTimeout(function () {
-        let image = new Image();
-        // 解决跨域 Canvas 污染问题
-        image.setAttribute("crossOrigin", "anonymous");
-        image.onload = function () {
-          let canvas = document.createElement("canvas");
-          canvas.width = image.width;
-          canvas.height = image.height;
-          let context = canvas.getContext("2d");
-          context.drawImage(image, 0, 0, image.width, image.height);
-          let url = canvas.toDataURL("image/png"); //得到图片的base64编码数据
-          let a = document.createElement("a"); // 生成一个a元素
-          let event = new MouseEvent("click"); // 创建一个单击事件
-          a.download = name || "photo"; // 设置图片名称
-          a.href = url; // 将生成的URL设置为a.href属性
-          a.dispatchEvent(event); // 触发a的单击事件
-        };
-        image.src = imgsrc;
-        anzhiyu.snackbarShow("图片已添加盲水印，请遵守版权协议");
-        rm.downloadimging = false;
-      }, "10000");
-    } else {
-      anzhiyu.snackbarShow("有正在进行中的下载，请稍后再试");
-    }
-  },
-  //禁止图片右键单击
-  stopImgRightDrag: function () {
-    var img = document.getElementsByTagName("img");
-    for (var i = 0; i < img.length; i++) {
-      img[i].addEventListener("dragstart", function () {
-        return false;
-      });
-    }
-  },
-  //滚动到指定id
-  scrollTo: function (id) {
-    var domTop = document.querySelector(id).offsetTop;
-    window.scrollTo(0, domTop - 80);
-  },
-  //隐藏侧边栏
-  hideAsideBtn: () => {
-    // Hide aside
-    const $htmlDom = document.documentElement.classList;
-    $htmlDom.contains("hide-aside")
-      ? saveToLocal.set("aside-status", "show", 2)
-      : saveToLocal.set("aside-status", "hide", 2);
-    $htmlDom.toggle("hide-aside");
-    $htmlDom.contains("hide-aside")
-      ? document.querySelector("#consoleHideAside").classList.add("on")
-      : document.querySelector("#consoleHideAside").classList.remove("on");
-  },
-  // 热评切换
-  switchCommentBarrage: function () {
-    let commentBarrage = document.querySelector(".comment-barrage");
-    if (commentBarrage) {
-      if (window.getComputedStyle(commentBarrage).display === "flex") {
-        commentBarrage.style.display = "none";
-        anzhiyu.snackbarShow("✨ 已关闭评论弹幕");
-        document.querySelector(".menu-commentBarrage-text").textContent = "显示热评";
-        document.querySelector("#consoleCommentBarrage").classList.remove("on");
-        localStorage.setItem("commentBarrageSwitch", "false");
-      } else {
-        commentBarrage.style.display = "flex";
-        document.querySelector(".menu-commentBarrage-text").textContent = "关闭热评";
-        document.querySelector("#consoleCommentBarrage").classList.add("on");
-        anzhiyu.snackbarShow("✨ 已开启评论弹幕");
-        localStorage.removeItem("commentBarrageSwitch");
-      }
-    }
-    rm && rm.hideRightMenu();
-  },
-  initPaginationObserver: () => {
-    const commentElement = document.getElementById("post-comment");
-    const paginationElement = document.getElementById("pagination");
-
-    if (commentElement && paginationElement) {
-      new IntersectionObserver(entries => {
-        const commentBarrage = document.querySelector(".comment-barrage");
-
-        entries.forEach(entry => {
-          if (entry.isIntersecting) {
-            paginationElement.classList.add("show-window");
-            if (commentBarrage) {
-              commentBarrage.style.bottom = "-200px";
-            }
-          } else {
-            paginationElement.classList.remove("show-window");
-            if (commentBarrage) {
-              commentBarrage.style.bottom = "0px";
-            }
-          }
-        });
-      }).observe(commentElement);
-    }
-  },
-  // 初始化即刻
-  initIndexEssay: function () {
-    if (!document.getElementById("bbTimeList")) return;
-    setTimeout(() => {
-      let essay_bar_swiper = new Swiper(".essay_bar_swiper_container", {
-        passiveListeners: true,
-        direction: "vertical",
-        loop: true,
-        autoplay: {
-          disableOnInteraction: true,
-          delay: 3000,
+        find: function (sel) {
+          var result = [];
+          els.forEach(function (el) {
+            Array.prototype.push.apply(result, el.querySelectorAll(sel));
+          });
+          return utils.dom(result);
         },
-        mousewheel: true,
-      });
-
-      let essay_bar_comtainer = document.getElementById("bbtalk");
-      if (essay_bar_comtainer !== null) {
-        essay_bar_comtainer.onmouseenter = function () {
-          essay_bar_swiper.autoplay.stop();
-        };
-        essay_bar_comtainer.onmouseleave = function () {
-          essay_bar_swiper.autoplay.start();
-        };
-      }
-    }, 100);
-  },
-  scrollByMouseWheel: function ($list, $target) {
-    const scrollHandler = function (e) {
-      $list.scrollLeft -= e.wheelDelta / 2;
-      e.preventDefault();
-    };
-    $list.addEventListener("mousewheel", scrollHandler, { passive: false });
-    if ($target) {
-      $target.classList.add("selected");
-      $list.scrollLeft = $target.offsetLeft - $list.offsetLeft - ($list.offsetWidth - $target.offsetWidth) / 2;
-    }
-  },
-  // catalog激活
-  catalogActive: function () {
-    const $list = document.getElementById("catalog-list");
-    if ($list) {
-      const pathname = decodeURIComponent(window.location.pathname);
-      const catalogListItems = $list.querySelectorAll(".catalog-list-item");
-
-      let $catalog = null;
-      catalogListItems.forEach(item => {
-        if (pathname.startsWith(item.id)) {
-          $catalog = item;
-          return;
-        }
-      });
-
-      anzhiyu.scrollByMouseWheel($list, $catalog);
-    }
-  },
-  // Page Tag 激活
-  tagsPageActive: function () {
-    const $list = document.getElementById("tag-page-tags");
-    if ($list) {
-      const $tagPageTags = document.getElementById(decodeURIComponent(window.location.pathname));
-      anzhiyu.scrollByMouseWheel($list, $tagPageTags);
-    }
-  },
-  // 修改时间显示"最近"
-  diffDate: function (d, more = false, simple = false) {
-    const dateNow = new Date();
-    const datePost = new Date(d);
-    const dateDiff = dateNow.getTime() - datePost.getTime();
-    const minute = 1000 * 60;
-    const hour = minute * 60;
-    const day = hour * 24;
-    const month = day * 30;
-
-    let result;
-    if (more) {
-      const monthCount = dateDiff / month;
-      const dayCount = dateDiff / day;
-      const hourCount = dateDiff / hour;
-      const minuteCount = dateDiff / minute;
-
-      if (monthCount >= 1) {
-        result = datePost.toLocaleDateString().replace(/\//g, "-");
-      } else if (dayCount >= 1) {
-        result = parseInt(dayCount) + " " + GLOBAL_CONFIG.date_suffix.day;
-      } else if (hourCount >= 1) {
-        result = parseInt(hourCount) + " " + GLOBAL_CONFIG.date_suffix.hour;
-      } else if (minuteCount >= 1) {
-        result = parseInt(minuteCount) + " " + GLOBAL_CONFIG.date_suffix.min;
-      } else {
-        result = GLOBAL_CONFIG.date_suffix.just;
-      }
-    } else if (simple) {
-      const monthCount = dateDiff / month;
-      const dayCount = dateDiff / day;
-      const hourCount = dateDiff / hour;
-      const minuteCount = dateDiff / minute;
-      if (monthCount >= 1) {
-        result = datePost.toLocaleDateString().replace(/\//g, "-");
-      } else if (dayCount >= 1 && dayCount <= 3) {
-        result = parseInt(dayCount) + " " + GLOBAL_CONFIG.date_suffix.day;
-      } else if (dayCount > 3) {
-        result = datePost.getMonth() + 1 + "/" + datePost.getDate();
-      } else if (hourCount >= 1) {
-        result = parseInt(hourCount) + " " + GLOBAL_CONFIG.date_suffix.hour;
-      } else if (minuteCount >= 1) {
-        result = parseInt(minuteCount) + " " + GLOBAL_CONFIG.date_suffix.min;
-      } else {
-        result = GLOBAL_CONFIG.date_suffix.just;
-      }
-    } else {
-      result = parseInt(dateDiff / day);
-    }
-    return result;
-  },
-
-  // 修改即刻中的时间显示
-  changeTimeInEssay: function () {
-    document.querySelector("#bber") &&
-      document.querySelectorAll("#bber time").forEach(function (e) {
-        var t = e,
-          datetime = t.getAttribute("datetime");
-        (t.innerText = anzhiyu.diffDate(datetime, true)), (t.style.display = "inline");
-      });
-  },
-  // 修改相册集中的时间
-  changeTimeInAlbumDetail: function () {
-    document.querySelector("#album_detail") &&
-      document.querySelectorAll("#album_detail time").forEach(function (e) {
-        var t = e,
-          datetime = t.getAttribute("datetime");
-        (t.innerText = anzhiyu.diffDate(datetime, true)), (t.style.display = "inline");
-      });
-  },
-  // 刷新瀑布流
-  reflashEssayWaterFall: function () {
-    const waterfallEl = document.getElementById("waterfall");
-    if (waterfallEl) {
-      setTimeout(function () {
-        waterfall(waterfallEl);
-        waterfallEl.classList.add("show");
-      }, 800);
-    }
-  },
-  sayhi: function () {
-    const $sayhiEl = document.getElementById("author-info__sayhi");
-
-    const getTimeState = () => {
-      const hour = new Date().getHours();
-      let message = "";
-
-      if (hour >= 0 && hour <= 5) {
-        message = "睡个好觉，保证精力充沛";
-      } else if (hour > 5 && hour <= 10) {
-        message = "一日之计在于晨";
-      } else if (hour > 10 && hour <= 14) {
-        message = "吃饱了才有力气干活";
-      } else if (hour > 14 && hour <= 18) {
-        message = "集中精力，攻克难关";
-      } else if (hour > 18 && hour <= 24) {
-        message = "不要太劳累了，早睡更健康";
-      }
-
-      return message;
-    };
-
-    if ($sayhiEl) {
-      $sayhiEl.innerHTML = getTimeState();
-    }
-  },
-
-  // 友链注入预设评论
-  addFriendLink() {
-    var input = document.getElementsByClassName("el-textarea__inner")[0];
-    if (!input) return;
-    const evt = new Event("input", { cancelable: true, bubbles: true });
-    const defaultPlaceholder =
-      "昵称（请勿包含博客等字样）：\n网站地址（要求博客地址，请勿提交个人主页）：\n头像图片url（请提供尽可能清晰的图片，我会上传到我自己的图床）：\n描述：\n站点截图（可选）：\n";
-    input.value = this.getConfigIfPresent(GLOBAL_CONFIG.linkPageTop, "addFriendPlaceholder", defaultPlaceholder);
-    input.dispatchEvent(evt);
-    input.focus();
-    input.setSelectionRange(-1, -1);
-  },
-  // 获取配置，如果为空则返回默认值
-  getConfigIfPresent: function (config, configKey, defaultValue) {
-    if (!config) return defaultValue;
-    if (!config.hasOwnProperty(configKey)) return defaultValue;
-    if (!config[configKey]) return defaultValue;
-    return config[configKey];
-  },
-  //切换音乐播放状态
-  musicToggle: function (changePaly = true) {
-    if (!anzhiyu_musicFirst) {
-      anzhiyu.musicBindEvent();
-      anzhiyu_musicFirst = true;
-    }
-    let msgPlay = '<i class="anzhiyufont anzhiyu-icon-play"></i><span>播放音乐</span>';
-    let msgPause = '<i class="anzhiyufont anzhiyu-icon-pause"></i><span>暂停音乐</span>';
-    if (anzhiyu_musicPlaying) {
-      navMusicEl.classList.remove("playing");
-      document.getElementById("menu-music-toggle").innerHTML = msgPlay;
-      document.getElementById("nav-music-hoverTips").innerHTML = "音乐已暂停";
-      document.querySelector("#consoleMusic").classList.remove("on");
-      anzhiyu_musicPlaying = false;
-      navMusicEl.classList.remove("stretch");
-    } else {
-      navMusicEl.classList.add("playing");
-      document.getElementById("menu-music-toggle").innerHTML = msgPause;
-      document.querySelector("#consoleMusic").classList.add("on");
-      anzhiyu_musicPlaying = true;
-      navMusicEl.classList.add("stretch");
-    }
-    if (changePaly) document.querySelector("#nav-music meting-js").aplayer.toggle();
-    rm && rm.hideRightMenu();
-  },
-  // 音乐伸缩
-  musicTelescopic: function () {
-    if (navMusicEl.classList.contains("stretch")) {
-      navMusicEl.classList.remove("stretch");
-    } else {
-      navMusicEl.classList.add("stretch");
-    }
-  },
-
-  //音乐上一曲
-  musicSkipBack: function () {
-    navMusicEl.querySelector("meting-js").aplayer.skipBack();
-    rm && rm.hideRightMenu();
-  },
-
-  //音乐下一曲
-  musicSkipForward: function () {
-    navMusicEl.querySelector("meting-js").aplayer.skipForward();
-    rm && rm.hideRightMenu();
-  },
-
-  //获取音乐中的名称
-  musicGetName: function () {
-    var x = document.querySelectorAll(".aplayer-title");
-    var arr = [];
-    for (var i = x.length - 1; i >= 0; i--) {
-      arr[i] = x[i].innerText;
-    }
-    return arr[0];
-  },
-
-  //初始化console图标
-  initConsoleState: function () {
-    //初始化隐藏边栏
-    const $htmlDomClassList = document.documentElement.classList;
-    $htmlDomClassList.contains("hide-aside")
-      ? document.querySelector("#consoleHideAside").classList.add("on")
-      : document.querySelector("#consoleHideAside").classList.remove("on");
-  },
-
-  // 显示打赏中控台
-  rewardShowConsole: function () {
-    // 判断是否为赞赏打开控制台
-    consoleEl.classList.add("reward-show");
-    anzhiyu.initConsoleState();
-  },
-  // 显示中控台
-  showConsole: function () {
-    consoleEl.classList.add("show");
-    anzhiyu.initConsoleState();
-  },
-
-  //隐藏中控台
-  hideConsole: function () {
-    if (consoleEl.classList.contains("show")) {
-      // 如果是一般控制台，就关闭一般控制台
-      consoleEl.classList.remove("show");
-    } else if (consoleEl.classList.contains("reward-show")) {
-      // 如果是打赏控制台，就关闭打赏控制台
-      consoleEl.classList.remove("reward-show");
-    }
-    // 获取center-console元素
-    const centerConsole = document.getElementById("center-console");
-
-    // 检查center-console是否被选中
-    if (centerConsole.checked) {
-      // 取消选中状态
-      centerConsole.checked = false;
-    }
-  },
-  // 取消加载动画
-  hideLoading: function () {
-    document.getElementById("loading-box").classList.add("loaded");
-  },
-  // 将音乐缓存播放
-  cacheAndPlayMusic() {
-    let data = localStorage.getItem("musicData");
-    if (data) {
-      data = JSON.parse(data);
-      const currentTime = new Date().getTime();
-      if (currentTime - data.timestamp < 24 * 60 * 60 * 1000) {
-        // 如果缓存的数据没有过期，直接使用
-        anzhiyu.playMusic(data.songs);
-        return;
-      }
-    }
-
-    // 否则重新从服务器获取数据
-    fetch("/json/music.json")
-      .then(response => response.json())
-      .then(songs => {
-        const cacheData = {
-          timestamp: new Date().getTime(),
-          songs: songs,
-        };
-        localStorage.setItem("musicData", JSON.stringify(cacheData));
-        anzhiyu.playMusic(songs);
-      });
-  },
-  // 播放音乐
-  playMusic(songs) {
-    const anMusicPage = document.getElementById("anMusic-page");
-    const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
-    const randomIndex = Math.floor(Math.random() * songs.length);
-    const randomSong = songs[randomIndex];
-    const allAudios = metingAplayer.list.audios;
-    if (!selectRandomSong.includes(randomSong.name)) {
-      // 如果随机到的歌曲已经未被随机到过，就添加进metingAplayer.list
-      metingAplayer.list.add([randomSong]);
-      // 播放最后一首(因为是添加到了最后)
-      metingAplayer.list.switch(allAudios.length);
-      // 添加到已被随机的歌曲列表
-      selectRandomSong.push(randomSong.name);
-    } else {
-      // 随机到的歌曲已经在播放列表中了
-      // 直接继续随机直到随机到没有随机过的歌曲，如果全部随机过了就切换到对应的歌曲播放即可
-      let songFound = false;
-      while (!songFound) {
-        const newRandomIndex = Math.floor(Math.random() * songs.length);
-        const newRandomSong = songs[newRandomIndex];
-        if (!selectRandomSong.includes(newRandomSong.name)) {
-          metingAplayer.list.add([newRandomSong]);
-          metingAplayer.list.switch(allAudios.length);
-          selectRandomSong.push(newRandomSong.name);
-          songFound = true;
-        }
-        // 如果全部歌曲都已被随机过，跳出循环
-        if (selectRandomSong.length === songs.length) {
-          break;
-        }
-      }
-      if (!songFound) {
-        // 如果全部歌曲都已被随机过，切换到对应的歌曲播放
-        const palyMusicIndex = allAudios.findIndex(song => song.name === randomSong.name);
-        if (palyMusicIndex != -1) metingAplayer.list.switch(palyMusicIndex);
-      }
-    }
-
-    console.info("已随机歌曲：", selectRandomSong, "本次随机歌曲：", randomSong.name);
-  },
-  // 音乐节目切换背景
-  changeMusicBg: function (isChangeBg = true) {
-    const anMusicBg = document.getElementById("an_music_bg");
-
-    if (isChangeBg) {
-      // player listswitch 会进入此处
-      const musiccover = document.querySelector("#anMusic-page .aplayer-pic");
-      anMusicBg.style.backgroundImage = musiccover.style.backgroundImage;
-    } else {
-      // 第一次进入，绑定事件，改背景
-      let timer = setInterval(() => {
-        const musiccover = document.querySelector("#anMusic-page .aplayer-pic");
-        // 确保player加载完成
-        if (musiccover) {
-          clearInterval(timer);
-          // 绑定事件
-          anzhiyu.addEventListenerMusic();
-          // 确保第一次能够正确替换背景
-          anzhiyu.changeMusicBg();
-
-          // 暂停nav的音乐
-          if (
-            document.querySelector("#nav-music meting-js").aplayer &&
-            !document.querySelector("#nav-music meting-js").aplayer.audio.paused
-          ) {
-            anzhiyu.musicToggle();
+        append: function (content) {
+          els.forEach(function (el) {
+            if (typeof content === 'string') {
+              el.insertAdjacentHTML('beforeend', content);
+            } else if (content && content.nodeType === 1) {
+              el.appendChild(content);
+            } else if (content && typeof content.length === 'number') {
+              Array.prototype.forEach.call(content, function (child) {
+                if (child && child.nodeType === 1) el.appendChild(child);
+              });
+            }
+          });
+          return api;
+        },
+        remove: function () {
+          els.forEach(function (el) {
+            el.remove();
+          });
+        },
+        addClass: function (cls) {
+          els.forEach(function (el) {
+            cls.trim().split(/\s+/).forEach(function (c) {
+              if (c) el.classList.add(c);
+            });
+          });
+          return api;
+        },
+        removeClass: function (cls) {
+          els.forEach(function (el) {
+            cls.trim().split(/\s+/).forEach(function (c) {
+              if (c) el.classList.remove(c);
+            });
+          });
+          return api;
+        },
+        toggleClass: function (cls, force) {
+          els.forEach(function (el) {
+            cls.trim().split(/\s+/).forEach(function (c) {
+              if (c) el.classList.toggle(c, force);
+            });
+          });
+          return api;
+        },
+        attr: function (name, value) {
+          if (value === undefined) {
+            return els[0] ? els[0].getAttribute(name) : undefined;
           }
-        }
-      }, 100);
-    }
-  },
-  // 获取自定义播放列表
-  getCustomPlayList: function () {
-    if (!window.location.pathname.startsWith("/music/")) {
-      return;
-    }
-    const urlParams = new URLSearchParams(window.location.search);
-    const userId = "8152976493";
-    const userServer = "netease";
-    const anMusicPageMeting = document.getElementById("anMusic-page-meting");
-    if (urlParams.get("id") && urlParams.get("server")) {
-      const id = urlParams.get("id");
-      const server = urlParams.get("server");
-      anMusicPageMeting.innerHTML = `<meting-js id="${id}" server=${server} type="playlist" type="playlist" mutex="true" preload="auto" theme="var(--anzhiyu-main)" order="list" list-max-height="calc(100vh - 169px)!important"></meting-js>`;
-    } else {
-      anMusicPageMeting.innerHTML = `<meting-js id="${userId}" server="${userServer}" type="playlist" mutex="true" preload="auto" theme="var(--anzhiyu-main)" order="list" list-max-height="calc(100vh - 169px)!important"></meting-js>`;
-    }
-    anzhiyu.changeMusicBg(false);
-  },
-  //隐藏今日推荐
-  hideTodayCard: function () {
-    if (document.getElementById("todayCard")) {
-      document.getElementById("todayCard").classList.add("hide");
-      const topGroup = document.querySelector(".topGroup");
-      const recentPostItems = topGroup.querySelectorAll(".recent-post-item");
-      recentPostItems.forEach(item => {
-        item.style.display = "flex";
-      });
-    }
-  },
-
-  // 监听音乐背景改变
-  addEventListenerMusic: function () {
-    const anMusicPage = document.getElementById("anMusic-page");
-    const aplayerIconMenu = anMusicPage.querySelector(".aplayer-info .aplayer-time .aplayer-icon-menu");
-    const anMusicBtnGetSong = anMusicPage.querySelector("#anMusicBtnGetSong");
-    const anMusicRefreshBtn = anMusicPage.querySelector("#anMusicRefreshBtn");
-    const anMusicSwitchingBtn = anMusicPage.querySelector("#anMusicSwitching");
-    const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
-    //初始化音量
-    metingAplayer.volume(0.8, true);
-    metingAplayer.on("loadeddata", function () {
-      anzhiyu.changeMusicBg();
-    });
-
-    aplayerIconMenu.addEventListener("click", function () {
-      document.getElementById("menu-mask").style.display = "block";
-      document.getElementById("menu-mask").style.animation = "0.5s ease 0s 1 normal none running to_show";
-      anMusicPage.querySelector(".aplayer.aplayer-withlist .aplayer-list").style.opacity = "1";
-    });
-
-    function anMusicPageMenuAask() {
-      if (window.location.pathname != "/music/") {
-        document.getElementById("menu-mask").removeEventListener("click", anMusicPageMenuAask);
-        return;
-      }
-
-      anMusicPage.querySelector(".aplayer-list").classList.remove("aplayer-list-hide");
-    }
-
-    document.getElementById("menu-mask").addEventListener("click", anMusicPageMenuAask);
-
-    // 监听增加单曲按钮
-    anMusicBtnGetSong.addEventListener("click", () => {
-      if (changeMusicListFlag) {
-        const anMusicPage = document.getElementById("anMusic-page");
-        const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
-        const allAudios = metingAplayer.list.audios;
-        const randomIndex = Math.floor(Math.random() * allAudios.length);
-        // 随机播放一首
-        metingAplayer.list.switch(randomIndex);
-      } else {
-        anzhiyu.cacheAndPlayMusic();
-      }
-    });
-    anMusicRefreshBtn.addEventListener("click", () => {
-      localStorage.removeItem("musicData");
-      anzhiyu.snackbarShow("已移除相关缓存歌曲");
-    });
-    anMusicSwitchingBtn.addEventListener("click", () => {
-      anzhiyu.changeMusicList();
-    });
-
-    // 默认加载的歌单
-    if (GLOBAL_CONFIG.music_page_default === "custom") {
-      anzhiyu.changeMusicList();
-    }
-
-    // 监听键盘事件
-    //空格控制音乐
-    document.addEventListener("keydown", function (event) {
-      //暂停开启音乐
-      if (event.code === "Space") {
-        event.preventDefault();
-        metingAplayer.toggle();
-      }
-      //切换下一曲
-      if (event.keyCode === 39) {
-        event.preventDefault();
-        metingAplayer.skipForward();
-      }
-      //切换上一曲
-      if (event.keyCode === 37) {
-        event.preventDefault();
-        metingAplayer.skipBack();
-      }
-      //增加音量
-      if (event.keyCode === 38) {
-        if (musicVolume <= 1) {
-          musicVolume += 0.1;
-          metingAplayer.volume(musicVolume, true);
-        }
-      }
-      //减小音量
-      if (event.keyCode === 40) {
-        if (musicVolume >= 0) {
-          musicVolume += -0.1;
-          metingAplayer.volume(musicVolume, true);
-        }
-      }
-    });
-  },
-  // 切换歌单
-  changeMusicList: async function () {
-    const anMusicPage = document.getElementById("anMusic-page");
-    const metingAplayer = anMusicPage.querySelector("meting-js").aplayer;
-    const currentTime = new Date().getTime();
-    const cacheData = JSON.parse(localStorage.getItem("musicData")) || { timestamp: 0 };
-    let songs = [];
-
-    if (changeMusicListFlag) {
-      songs = defaultPlayMusicList;
-    } else {
-      // 保存当前默认播放列表，以使下次可以切换回来
-      defaultPlayMusicList = metingAplayer.list.audios;
-      // 如果缓存的数据没有过期，直接使用
-      if (currentTime - cacheData.timestamp < 24 * 60 * 60 * 1000) {
-        songs = cacheData.songs;
-      } else {
-        // 否则重新从服务器获取数据
-        const response = await fetch("/json/music.json");
-        songs = await response.json();
-        cacheData.timestamp = currentTime;
-        cacheData.songs = songs;
-        localStorage.setItem("musicData", JSON.stringify(cacheData));
-      }
-    }
-
-    // 清除当前播放列表并添加新的歌曲
-    metingAplayer.list.clear();
-    metingAplayer.list.add(songs);
-
-    // 切换标志位
-    changeMusicListFlag = !changeMusicListFlag;
-  },
-  // 控制台音乐列表监听
-  addEventListenerConsoleMusicList: function () {
-    const navMusic = document.getElementById("nav-music");
-    if (!navMusic) return;
-    navMusic.addEventListener("click", e => {
-      const aplayerList = navMusic.querySelector(".aplayer-list");
-      const listBtn = navMusic.querySelector(
-        "div.aplayer-info > div.aplayer-controller > div.aplayer-time.aplayer-time-narrow > button.aplayer-icon.aplayer-icon-menu svg"
-      );
-      if (e.target != listBtn && aplayerList.classList.contains("aplayer-list-hide")) {
-        aplayerList.classList.remove("aplayer-list-hide");
-      }
-    });
-  },
-  // 监听按键 - 页码跳转
-  toPage: function () {
-    var toPageText = document.getElementById("toPageText"),
-      toPageButton = document.getElementById("toPageButton"),
-      pageNumbers = document.querySelectorAll(".page-number"),
-      pageNumber = Number(toPageText.value);
-
-    // 获取最大页码，确保在分页元素不存在或为空时有默认值
-    var lastPageNumber = 1;
-    if (pageNumbers && pageNumbers.length > 0) {
-      // 遍历所有分页数字，找出最大值（避免分页显示不完整导致的问题）
-      pageNumbers.forEach(function (el) {
-        var num = Number(el.textContent);
-        if (!isNaN(num) && num > lastPageNumber) {
-          lastPageNumber = num;
-        }
-      });
-    }
-
-    if (!isNaN(pageNumber) && pageNumber >= 1 && Number.isInteger(pageNumber)) {
-      // 确保页码不超过最大页码
-      var targetPage = pageNumber > lastPageNumber ? lastPageNumber : pageNumber;
-      var url = "/page/" + targetPage + "/#content-inner";
-      toPageButton.href = targetPage === 1 ? "/" : url;
-    } else {
-      toPageButton.href = "javascript:void(0);";
-    }
-  },
-
-  //删除多余的class
-  removeBodyPaceClass: function () {
-    document.body.className = "pace-done";
-  },
-  // 修改body的type类型以适配css
-  setValueToBodyType: function () {
-    const input = document.getElementById("page-type"); // 获取input元素
-    const value = input.value; // 获取input的value值
-    document.body.dataset.type = value; // 将value值赋值到body的type属性上
-  },
-  //匿名评论
-  addRandomCommentInfo: function () {
-    // 从形容词数组中随机取一个值
-    const randomAdjective = adjectives[Math.floor(Math.random() * adjectives.length)];
-
-    // 从蔬菜水果动物名字数组中随机取一个值
-    const randomName = vegetablesAndFruits[Math.floor(Math.random() * vegetablesAndFruits.length)];
-
-    // 将两个值组合成一个字符串
-    const name = `${randomAdjective}${randomName}`;
-
-    function dr_js_autofill_commentinfos() {
-      var lauthor = [
-          "#author",
-          "input[name='comname']",
-          "#inpName",
-          "input[name='author']",
-          "#ds-dialog-name",
-          "#name",
-          "input[name='nick']",
-          "#comment_author",
-        ],
-        lmail = [
-          "#mail",
-          "#email",
-          "input[name='commail']",
-          "#inpEmail",
-          "input[name='email']",
-          "#ds-dialog-email",
-          "input[name='mail']",
-          "#comment_email",
-        ],
-        lurl = [
-          "#url",
-          "input[name='comurl']",
-          "#inpHomePage",
-          "#ds-dialog-url",
-          "input[name='url']",
-          "input[name='website']",
-          "#website",
-          "input[name='link']",
-          "#comment_url",
-        ];
-      for (var i = 0; i < lauthor.length; i++) {
-        var author = document.querySelector(lauthor[i]);
-        if (author != null) {
-          author.value = name;
-          author.dispatchEvent(new Event("input"));
-          author.dispatchEvent(new Event("change"));
-          break;
-        }
-      }
-      for (var j = 0; j < lmail.length; j++) {
-        var mail = document.querySelector(lmail[j]);
-        if (mail != null) {
-          mail.value = visitorMail;
-          mail.dispatchEvent(new Event("input"));
-          mail.dispatchEvent(new Event("change"));
-          break;
-        }
-      }
-      return !1;
-    }
-
-    dr_js_autofill_commentinfos();
-    var input = document.getElementsByClassName("el-textarea__inner")[0];
-    input.focus();
-    input.setSelectionRange(-1, -1);
-  },
-
-  // 跳转开往
-  totraveling: function () {
-    anzhiyu.snackbarShow(
-      "即将跳转到「开往」项目的成员博客，不保证跳转网站的安全性和可用性",
-      element => {
-        element.style.opacity = 0;
-        travellingsTimer && clearTimeout(travellingsTimer);
-      },
-      5000,
-      "取消"
-    );
-    travellingsTimer = setTimeout(function () {
-      window.open("https://www.travellings.cn/go.html", "_blank");
-    }, "5000");
-  },
-
-  // 工具函数替换字符串
-  replaceAll: function (e, n, t) {
-    return e.split(n).join(t);
-  },
-
-  // 音乐绑定事件
-  musicBindEvent: function () {
-    document.querySelector("#nav-music .aplayer-music").addEventListener("click", function () {
-      anzhiyu.musicTelescopic();
-    });
-    document.querySelector("#nav-music .aplayer-button").addEventListener("click", function () {
-      anzhiyu.musicToggle(false);
-    });
-  },
-
-  // 判断是否是移动端
-  hasMobile: function () {
-    let isMobile = false;
-    if (
-      navigator.userAgent.match(
-        /(phone|pad|pod|iPhone|iPod|ios|iPad|Android|Mobile|BlackBerry|IEMobile|MQQBrowser|JUC|Fennec|wOSBrowser|BrowserNG|WebOS|Symbian|Windows Phone)/i
-      ) ||
-      document.body.clientWidth < 800
-    ) {
-      // 移动端
-      isMobile = true;
-    }
-    return isMobile;
-  },
-
-  // 创建二维码
-  qrcodeCreate: function () {
-    if (document.getElementById("qrcode")) {
-      document.getElementById("qrcode").innerHTML = "";
-      var qrcode = new QRCode(document.getElementById("qrcode"), {
-        text: window.location.href,
-        width: 250,
-        height: 250,
-        colorDark: "#000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.H,
-      });
-    }
-  },
-
-  // 判断是否在el内
-  isInViewPortOfOne: function (el) {
-    if (!el) return;
-    const viewPortHeight = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
-    const offsetTop = el.offsetTop;
-    const scrollTop = document.documentElement.scrollTop;
-    const top = offsetTop - scrollTop;
-    return top <= viewPortHeight;
-  },
-  //添加赞赏蒙版
-  addRewardMask: function () {
-    if (!document.querySelector(".reward-main")) return;
-    document.querySelector(".reward-main").style.display = "flex";
-    document.querySelector(".reward-main").style.zIndex = "102";
-    document.getElementById("quit-box").style.display = "flex";
-  },
-  // 移除赞赏蒙版
-  removeRewardMask: function () {
-    if (!document.querySelector(".reward-main")) return;
-    document.querySelector(".reward-main").style.display = "none";
-    document.getElementById("quit-box").style.display = "none";
-  },
-
-  keyboardToggle: function () {
-    const isKeyboardOn = anzhiyu_keyboard;
-
-    if (isKeyboardOn) {
-      const consoleKeyboard = document.querySelector("#consoleKeyboard");
-      consoleKeyboard.classList.remove("on");
-      anzhiyu_keyboard = false;
-    } else {
-      const consoleKeyboard = document.querySelector("#consoleKeyboard");
-      consoleKeyboard.classList.add("on");
-      anzhiyu_keyboard = true;
-    }
-
-    localStorage.setItem("keyboardToggle", isKeyboardOn ? "false" : "true");
-  },
-  rightMenuToggle: function () {
-    if (window.oncontextmenu) {
-      window.oncontextmenu = null;
-    } else if (!window.oncontextmenu && oncontextmenuFunction) {
-      window.oncontextmenu = oncontextmenuFunction;
-    }
-  },
-  switchConsole: () => {
-    // switch console
-    const consoleEl = document.getElementById("console");
-    //初始化隐藏边栏
-    const $htmlDom = document.documentElement.classList;
-    $htmlDom.contains("hide-aside")
-      ? document.querySelector("#consoleHideAside").classList.add("on")
-      : document.querySelector("#consoleHideAside").classList.remove("on");
-    if (consoleEl.classList.contains("show")) {
-      consoleEl.classList.remove("show");
-    } else {
-      consoleEl.classList.add("show");
-    }
-    const consoleKeyboard = document.querySelector("#consoleKeyboard");
-
-    if (consoleKeyboard) {
-      if (localStorage.getItem("keyboardToggle") === "true") {
-        consoleKeyboard.classList.add("on");
-        anzhiyu_keyboard = true;
-      } else {
-        consoleKeyboard.classList.remove("on");
-        anzhiyu_keyboard = false;
-      }
-    }
-  },
-  // 定义 intersectionObserver 函数，并接收两个可选参数
-  intersectionObserver: function (enterCallback, leaveCallback) {
-    let observer;
-    return () => {
-      if (!observer) {
-        observer = new IntersectionObserver(entries => {
-          entries.forEach(entry => {
-            if (entry.intersectionRatio > 0) {
-              enterCallback?.();
+          els.forEach(function (el) {
+            el.setAttribute(name, value);
+          });
+          return api;
+        },
+        data: function (name) {
+          return els[0] ? els[0].getAttribute('data-' + name) : undefined;
+        },
+        text: function (value) {
+          if (value === undefined) {
+            return els[0] ? els[0].textContent : undefined;
+          }
+          els.forEach(function (el) {
+            el.textContent = value;
+          });
+          return api;
+        },
+        html: function (content) {
+          if (content === undefined) {
+            return els[0] ? els[0].innerHTML : undefined;
+          }
+          els.forEach(function (el) {
+            if (typeof content !== 'string' && content && typeof content.length === 'number' && content[0] && content[0].nodeType === 1) {
+              var frag = document.createDocumentFragment();
+              Array.prototype.forEach.call(content, function (child) {
+                frag.appendChild(child);
+              });
+              el.replaceChildren(frag);
             } else {
-              leaveCallback?.();
+              el.innerHTML = content;
             }
           });
-        });
-      } else {
-        // 如果 observer 对象已经存在，则先取消对之前元素的观察
-        observer.disconnect();
+          return api;
+        },
+        val: function (value) {
+          if (value === undefined) {
+            return els[0] ? els[0].value : undefined;
+          }
+          els.forEach(function (el) {
+            el.value = value;
+          });
+          return api;
+        },
+        offset: function () {
+          var el = els[0];
+          if (!el) return { top: 0, left: 0 };
+          var rect = el.getBoundingClientRect();
+          return { top: rect.top + window.scrollY, left: rect.left + window.scrollX };
+        },
+        on: function (event, cb) {
+          els.forEach(function (el) {
+            el.addEventListener(event, cb);
+          });
+          return api;
+        },
+        click: function (cb) { return api.on('click', cb); },
+        focus: function (cb) { return api.on('focus', cb); },
+        keydown: function (cb) { return api.on('keydown', cb); },
+        empty: function () {
+          els.forEach(function (el) {
+            el.replaceChildren();
+          });
+          return api;
+        }
+      };
+      els.forEach(function (el, i) {
+        api[i] = el;
+      });
+      return api;
+    },
+
+    onLoading: (el) => {
+      if (el) {
+        if (el.querySelector('.loading-wrap') === null) {
+          el.insertAdjacentHTML('beforeend', `<div class="loading-wrap"><div class="lazy-icon"></div></div>`);
+        }
       }
-      return observer;
-    };
-  },
-  // CategoryBar滚动
-  scrollCategoryBarToRight: function () {
-    // 获取需要操作的元素
-    const items = document.getElementById("catalog-list");
-    const nextButton = document.getElementById("category-bar-next");
-
-    // 检查元素是否存在
-    if (items && nextButton) {
-      const itemsWidth = items.clientWidth;
-
-      // 判断是否已经滚动到最右侧
-      if (items.scrollLeft + items.clientWidth + 1 >= items.scrollWidth) {
-        // 滚动到初始位置并更新按钮内容
-        items.scroll({
-          left: 0,
-          behavior: "smooth",
-        });
-        nextButton.innerHTML = '<i class="anzhiyufont anzhiyu-icon-angle-double-right"></i>';
-      } else {
-        // 滚动到下一个视图
-        items.scrollBy({
-          left: itemsWidth,
-          behavior: "smooth",
-        });
+    },
+    onLoadSuccess: (el) => {
+      if (el) {
+        var wrap = el.querySelector('.loading-wrap');
+        if (wrap) wrap.remove();
       }
-    } else {
-      console.error("Element(s) not found: 'catalog-list' and/or 'category-bar-next'.");
-    }
-  },
-  // 分类条
-  categoriesBarActive: function () {
-    const urlinfo = decodeURIComponent(window.location.pathname);
-    const $categoryBar = document.getElementById("category-bar");
-    if (!$categoryBar) return;
-
-    if (urlinfo === "/") {
-      $categoryBar.querySelector("#首页").classList.add("select");
-    } else {
-      const pattern = /\/categories\/.*?\//;
-      const patbool = pattern.test(urlinfo);
-      if (!patbool) return;
-
-      const nowCategorie = urlinfo.split("/")[2];
-      $categoryBar.querySelector(`#${nowCategorie}`).classList.add("select");
-    }
-  },
-  topCategoriesBarScroll: function () {
-    const $categoryBarItems = document.getElementById("category-bar-items");
-    if (!$categoryBarItems) return;
-
-    $categoryBarItems.addEventListener("mousewheel", function (e) {
-      const v = -e.wheelDelta / 2;
-      this.scrollLeft += v;
-      e.preventDefault();
-    });
-  },
-  // 切换菜单显示热评
-  switchRightClickMenuHotReview: function () {
-    const postComment = document.getElementById("post-comment");
-    const menuCommentBarrageDom = document.getElementById("menu-commentBarrage");
-    if (postComment) {
-      menuCommentBarrageDom.style.display = "flex";
-    } else {
-      menuCommentBarrageDom.style.display = "none";
-    }
-  },
-  // 切换作者卡片状态文字
-  changeSayHelloText: function () {
-    const greetings = GLOBAL_CONFIG.authorStatus.skills;
-
-    const authorInfoSayHiElement = document.getElementById("author-info__sayhi");
-
-    // 如果只有一个问候语，设置为默认值
-    if (greetings.length === 1) {
-      authorInfoSayHiElement.textContent = greetings[0];
-      return;
-    }
-
-    let lastSayHello = authorInfoSayHiElement.textContent;
-
-    let randomGreeting = lastSayHello;
-    while (randomGreeting === lastSayHello) {
-      randomGreeting = greetings[Math.floor(Math.random() * greetings.length)];
-    }
-    authorInfoSayHiElement.textContent = randomGreeting;
-  },
-};
-
-const anzhiyuPopupManager = {
-  queue: [],
-  processing: false,
-  Jump: false,
-
-  enqueuePopup(title, tip, url, duration = 3000) {
-    this.queue.push({ title, tip, url, duration });
-    if (!this.processing) {
-      this.processQueue();
-    }
-  },
-
-  processQueue() {
-    if (this.queue.length > 0 && !this.processing) {
-      this.processing = true;
-      const { title, tip, url, duration } = this.queue.shift();
-      this.popupShow(title, tip, url, duration);
-    }
-  },
-
-  popupShow(title, tip, url, duration) {
-    const popupWindow = document.getElementById("popup-window");
-    if (!popupWindow) return;
-    const windowTitle = popupWindow.querySelector(".popup-window-title");
-    const windowContent = popupWindow.querySelector(".popup-window-content");
-    const cookiesTip = windowContent.querySelector(".popup-tip");
-    if (popupWindow.classList.contains("show-popup-window")) {
-      popupWindow.classList.add("popup-hide");
-    }
-
-    // 等待上一个弹窗完全消失
-    setTimeout(() => {
-      // 移除之前的点击事件处理程序
-      popupWindow.removeEventListener("click", this.clickEventHandler);
-      if (url) {
-        if (window.pjax) {
-          this.clickEventHandler = event => {
-            event.preventDefault();
-            pjax.loadUrl(url);
-            popupWindow.classList.remove("show-popup-window");
-            popupWindow.classList.remove("popup-hide");
-            this.Jump = true;
-
-            // 处理队列中的下一个弹出窗口
-            this.processing = false;
-            this.processQueue();
-          };
-
-          popupWindow.addEventListener("click", this.clickEventHandler);
-        } else {
-          this.clickEventHandler = () => {
-            window.location.href = url;
-          };
-          popupWindow.addEventListener("click", this.clickEventHandler);
+    },
+    onLoadFailure: (el) => {
+      if (el) {
+        var wrap = el.querySelector('.loading-wrap');
+        if (wrap) {
+          var svg = wrap.querySelector('svg');
+          if (svg) svg.remove();
+          wrap.insertAdjacentHTML('beforeend', ctx.icons['default:warning']);
+          wrap.classList.add('error');
         }
-        if (popupWindow.classList.contains("no-url")) {
-          popupWindow.classList.remove("no-url");
-        }
+      }
+    },
+    /********************** data cache ********************************/
+    // 动态数据本地缓存：TTL 未过期直接命中；过期后先显示缓存再后台刷新（stale-while-revalidate）
+    _cacheEnabled: true,
+    _cacheMaxEntryBytes: 200 * 1024,
+    // 同 URL 并发请求去重：页面内多个组件请求同一接口时共享一次 fetch
+    _pendingRequests: {},
+    _fetchShared: (url, options) => {
+      const key = (options && options.method || 'GET') + ' ' + url;
+      if (utils._pendingRequests[key]) {
+        return utils._pendingRequests[key].then(resp => resp.clone());
+      }
+      const promise = fetch(url, options).then(resp => {
+        if (!resp.ok) throw new Error('响应失败');
+        return resp;
+      }).finally(() => {
+        delete utils._pendingRequests[key];
+      });
+      utils._pendingRequests[key] = promise;
+      // 每个调用方各自 clone，避免 Response body 被消费后其他调用方取不到数据
+      return promise.then(resp => resp.clone());
+    },
+    // 延迟执行：缓存写入等非关键操作让出主线程
+    _defer: (fn) => {
+      if (window.requestIdleCallback) {
+        window.requestIdleCallback(fn, { timeout: 3000 });
       } else {
-        if (!popupWindow.classList.contains("no-url")) {
-          popupWindow.classList.add("no-url");
+        setTimeout(fn, 0);
+      }
+    },
+    cache: {
+      prefix: 'Stellar.data_cache.v1.',
+      enabled: () => !!def.data_cache?.enable && utils._cacheEnabled,
+      serviceId: (el, options) => {
+        if (options && options.service) return options.service;
+        if (el) {
+          const match = String(el.className || '').match(/\bds-([\w-]+)\b/);
+          if (match) return match[1];
         }
-
-        this.clickEventHandler = () => {
-          popupWindow.classList.add("popup-hide");
-          setTimeout(() => {
-            popupWindow.classList.remove("popup-hide");
-            popupWindow.classList.remove("show-popup-window");
-          }, 1000);
+        return null;
+      },
+      ttl: (el, options) => {
+        const conf = def.data_cache || {};
+        const id = utils.cache.serviceId(el, options);
+        const value = id && conf.ttl && conf.ttl[id] != null ? conf.ttl[id] : conf.default_ttl;
+        return typeof value === 'number' && value > 0 ? value : 0;
+      },
+      shouldCache: (url, options) => {
+        if (!utils.cache.enabled()) return false;
+        if (options && (options.cache === false || options.cache === 'no-store')) return false;
+        if (options && options.method && options.method !== 'GET') return false;
+        // 带时间戳缓存破坏参数的请求不缓存（如 mdrender 的 ?t=）
+        if (/[?&]t=\d{10,}/.test(url)) return false;
+        return true;
+      },
+      get: (url) => {
+        try {
+          const raw = localStorage.getItem(utils.cache.prefix + url);
+          if (!raw) return null;
+          const entry = JSON.parse(raw);
+          if (!entry || typeof entry.text !== 'string' || typeof entry.ts !== 'number') return null;
+          return entry;
+        } catch (e) {
+          console.warn('[cache] 读取失败:', url, e);
+          return null;
+        }
+      },
+      set: (url, text, contentType, ttl) => {
+        if (!(ttl > 0)) return;
+        if (text.length > utils._cacheMaxEntryBytes) return;
+        const entry = JSON.stringify({
+          text: text,
+          contentType: contentType || 'application/json',
+          ts: Date.now(),
+          ttl: ttl
+        });
+        const trySet = () => {
+          try {
+            localStorage.setItem(utils.cache.prefix + url, entry);
+            utils.cache.trim();
+            return true;
+          } catch (e) {
+            return false;
+          }
         };
-        popupWindow.addEventListener("click", this.clickEventHandler);
+        if (!trySet()) {
+          // 配额不足时淘汰最旧条目后重试一次，仍失败则本会话禁用缓存
+          utils.cache.evictOldest(url);
+          if (!trySet()) {
+            console.warn('[cache] 写入失败，本会话禁用缓存:', url);
+            utils._cacheEnabled = false;
+          }
+        }
+      },
+      trim: () => {
+        try {
+          const max = (def.data_cache && def.data_cache.max_entries) || 200;
+          const keys = [];
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (key && key.indexOf(utils.cache.prefix) === 0) keys.push(key);
+          }
+          if (keys.length <= max) return;
+          const sorted = keys.map((key) => {
+            let ts = 0;
+            try {
+              const entry = JSON.parse(localStorage.getItem(key) || 'null');
+              if (entry && typeof entry.ts === 'number') ts = entry.ts;
+            } catch (e) {}
+            return { key, ts };
+          }).sort((a, b) => a.ts - b.ts);
+          for (let i = 0; i < sorted.length - max; i++) {
+            localStorage.removeItem(sorted[i].key);
+          }
+        } catch (e) {
+          console.warn('[cache] 清理失败:', e);
+        }
+      },
+      evictOldest: (exceptUrl) => {
+        try {
+          let oldestKey = null;
+          let oldestTs = Infinity;
+          const exceptKey = utils.cache.prefix + exceptUrl;
+          for (let i = 0; i < localStorage.length; i++) {
+            const key = localStorage.key(i);
+            if (!key || key.indexOf(utils.cache.prefix) !== 0 || key === exceptKey) continue;
+            let ts = 0;
+            try {
+              const entry = JSON.parse(localStorage.getItem(key) || 'null');
+              if (entry && typeof entry.ts === 'number') ts = entry.ts;
+            } catch (e) {}
+            if (ts < oldestTs) {
+              oldestTs = ts;
+              oldestKey = key;
+            }
+          }
+          if (oldestKey) localStorage.removeItem(oldestKey);
+        } catch (e) {}
+      },
+      isFresh: (entry) => {
+        if (!entry || typeof entry.ts !== 'number' || typeof entry.ttl !== 'number') return false;
+        if (!(entry.ttl > 0)) return false;
+        return Date.now() - entry.ts < entry.ttl * 1000;
+      },
+      // 用缓存文本重建 Response，兼容回调中的 resp.json() / resp.text()
+      toResponse: (entry) => new Response(entry.text, {
+        status: 200,
+        statusText: 'OK',
+        headers: { 'Content-Type': entry.contentType }
+      })
+    },
+    request: (el, url, callback, onFailure, options) => {
+      // 检查元素实例是否已加载 (而不是检查属性)
+      if (el && utils._loadedElements.has(el)) {
+        return;
+      }
+      const maxRetry = 3;
+      let retryCount = 0;
+      const ttl = utils.cache.ttl(el, options);
+      const cacheable = utils.cache.shouldCache(url, options) && ttl > 0;
+      const cached = cacheable ? utils.cache.get(url) : null;
+      // 缓存渲染前的初始结构，后台刷新渲染前恢复，避免重复渲染
+      let initialHTML = null;
+      // 缓存渲染完成后（或超时兜底）再启动后台刷新，避免异步渲染未结束就清空重绘
+      let cacheRenderDone = null;
+
+      if (cached) {
+        if (el) {
+          // 已有缓存时不显示加载动画
+          utils.onLoadSuccess?.(el);
+          initialHTML = el.innerHTML;
+        }
+        try {
+          cacheRenderDone = Promise.resolve(callback(utils.cache.toResponse(cached))).catch(e => {
+            console.warn('[request] 缓存渲染失败:', url, e);
+          });
+        } catch (e) {
+          console.warn('[request] 缓存渲染失败:', url, e);
+        }
+        // 缓存未过期：直接完成，不发请求
+        if (utils.cache.isFresh(cached)) {
+          if (el) utils._loadedElements.add(el);
+          return Promise.resolve(cached.text);
+        }
+      } else {
+        utils.onLoading?.(el);
       }
 
-      if (popupWindow.classList.contains("popup-hide")) {
-        popupWindow.classList.remove("popup-hide");
-      }
-      popupWindow.classList.add("show-popup-window");
-      windowTitle.textContent = title;
-      cookiesTip.textContent = tip;
-    }, 800);
+      return new Promise((resolve, reject) => {
+        const load = () => {
+          let timedOut = false;
+          const timeout = setTimeout(() => {
+            timedOut = true;
+            console.warn('[request] 超时:', url);
 
-    setTimeout(() => {
-      if (url && !this.Jump) {
-        this.Jump = false;
-      }
-      if (!popupWindow.classList.contains("popup-hide") && popupWindow.className != "") {
-        popupWindow.classList.add("popup-hide");
+            if (++retryCount >= maxRetry) {
+              if (cached) {
+                // 已有缓存渲染，保留缓存内容，不显示失败
+                resolve(cached.text);
+              } else {
+                utils.onLoadFailure?.(el);
+                onFailure?.();
+                reject('请求超时');
+              }
+            } else {
+              setTimeout(load, 1000);
+            }
+          }, 5000);
+
+          utils._fetchShared(url).then(resp => {
+            if (timedOut) return;
+            clearTimeout(timeout);
+            return resp;
+          }).then(data => {
+            if (timedOut) return;
+            // 标记元素实例为已加载
+            if (el) utils._loadedElements.add(el);
+            // 写入缓存：回调会立即消费 data 的 body，必须先同步 clone 再延迟读取
+            if (cacheable && data.ok) {
+              const cacheClone = data.clone();
+              const contentType = data.headers.get('Content-Type') || 'application/json';
+              utils._defer(() => {
+                cacheClone.text().then(text => {
+                  utils.cache.set(url, text, contentType, ttl);
+                }).catch(() => {});
+              });
+            }
+            // 后台刷新渲染前恢复初始结构，避免缓存渲染的内容重复
+            if (el && initialHTML !== null) {
+              el.innerHTML = initialHTML;
+            }
+            utils.onLoadSuccess?.(el);
+            callback(data);
+            resolve(data);
+          }).catch(err => {
+            clearTimeout(timeout);
+            console.warn('[request] 错误:', err);
+
+            if (++retryCount >= maxRetry) {
+              if (cached) {
+                resolve(cached.text);
+              } else {
+                utils.onLoadFailure?.(el);
+                onFailure?.();
+                reject(err);
+              }
+            } else {
+              setTimeout(load, 1000);
+            }
+          });
+        };
+
+        if (cacheRenderDone) {
+          Promise.race([
+            cacheRenderDone,
+            new Promise(resolve => setTimeout(resolve, 5000))
+          ]).then(load);
+        } else {
+          load();
+        }
+      });
+    },
+    requestWithoutLoading: (url, options = {}, maxRetry = 2, timeout = 5000) => {
+      const ttl = utils.cache.ttl(null, options);
+      const cacheable = utils.cache.shouldCache(url, options) && ttl > 0;
+      const cached = cacheable ? utils.cache.get(url) : null;
+
+      if (cached && utils.cache.isFresh(cached)) {
+        return Promise.resolve(utils.cache.toResponse(cached));
       }
 
-      // 处理队列中的下一个弹出窗口
-      this.processing = false;
-      this.processQueue();
-    }, duration);
-  },
-};
+      return new Promise((resolve, reject) => {
+        let retryCount = 0;
+        // 与 request 保持一致：最终失败时回退 stale 缓存，避免闪失败态
+        const fallback = () => {
+          if (cached) {
+            resolve(utils.cache.toResponse(cached));
+          } else {
+            reject('timeout');
+          }
+        };
+
+        const tryRequest = () => {
+          let timedOut = false;
+          const timer = setTimeout(() => {
+            timedOut = true;
+            if (++retryCount > maxRetry) fallback();
+            else tryRequest();
+          }, timeout);
+
+          utils._fetchShared(url, options)
+            .then(resp => {
+              clearTimeout(timer);
+              if (timedOut) return;
+              if (cacheable) {
+                // 调用方会消费 resp 的 body，必须先同步 clone 再延迟读取
+                const cacheClone = resp.clone();
+                const contentType = resp.headers.get('Content-Type') || 'application/json';
+                utils._defer(() => {
+                  cacheClone.text().then(text => {
+                    utils.cache.set(url, text, contentType, ttl);
+                  }).catch(() => {});
+                });
+              }
+              resolve(resp);
+            })
+            .catch(err => {
+              clearTimeout(timer);
+              if (timedOut) return;
+              if (++retryCount > maxRetry) {
+                if (cached) {
+                  resolve(utils.cache.toResponse(cached));
+                } else {
+                  reject(err);
+                }
+              } else {
+                setTimeout(tryRequest, 500);
+              }
+            });
+        };
+
+        tryRequest();
+      });
+    },
+    /********************** requestAnimationFrame ********************************/
+    // 1、requestAnimationFrame 会把每一帧中的所有 DOM 操作集中起来，在一次重绘或回流中就完成，并且重绘或回流的时间间隔紧紧跟随浏览器的刷新频率，一般来说，这个频率为每秒60帧。
+    // 2、在隐藏或不可见的元素中，requestAnimationFrame 将不会进行重绘或回流，这当然就意味着更少的的 cpu，gpu 和内存使用量。
+    requestAnimationFrame: (fn) => {
+      if (!window.requestAnimationFrame) {
+        window.requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame;
+      }
+      window.requestAnimationFrame(fn)
+    },
+    dark: {},
+
+    // 插件初始化管理器 - 统一处理 DOMContentLoaded 事件
+    _pluginInitializers: [],
+    _pluginCleanups: new Map(), // 存储每个插件的清理函数
+    
+    initPlugin: (initFn, name, options = {}) => {
+      if (!initFn || typeof initFn !== 'function') return;
+      
+      // 避免重复注册
+      const pluginName = name || initFn.name;
+      if (utils._pluginInitializers.some(p => p.name === pluginName)) return;
+      
+      // 包装初始化函数，添加防重复执行的保护
+      const wrappedInit = () => {
+        try {
+          // 在执行前先清理旧的资源
+          if (utils._pluginCleanups.has(pluginName)) {
+            const cleanup = utils._pluginCleanups.get(pluginName);
+            if (typeof cleanup === 'function') {
+              cleanup();
+            }
+          }
+          
+          // 执行初始化，可能返回清理函数
+          const cleanup = initFn();
+          
+          // 如果初始化函数返回了清理函数，保存它
+          if (typeof cleanup === 'function') {
+            utils._pluginCleanups.set(pluginName, cleanup);
+          }
+        } catch (error) {
+          console.error(`[Plugin ${pluginName}] 初始化失败:`, error);
+        }
+      };
+      
+      utils._pluginInitializers.push({ 
+        fn: wrappedInit, 
+        name: pluginName,
+        options: options 
+      });
+      
+      // 如果 DOM 已经加载完成，立即执行
+      if (document.readyState === 'complete' || document.readyState === 'interactive') {
+        wrappedInit();
+      } else {
+        // 否则等待 DOMContentLoaded
+        window.addEventListener('DOMContentLoaded', wrappedInit, { once: true });
+      }
+    },
+
+    // 清理所有插件资源
+    cleanupPlugins: () => {
+      utils._pluginCleanups.forEach((cleanup, name) => {
+        try {
+          cleanup();
+        } catch (error) {
+          console.error(`[Plugin ${name}] 清理失败:`, error);
+        }
+      });
+      utils._pluginCleanups.clear();
+    },
+    
+    // 清理所有资源（用于页面卸载或重置）
+    cleanupAll: () => {
+      utils.cleanupPlugins();
+    },
+  };
+
+  // utils.dark.mode 当前模式 dark or light
+  // utils.dark.toggle() 暗黑模式触发器
+  // utils.dark.push(callBack[,"callBackName"]) 传入触发器回调函数
+  utils.dark.method = {
+    toggle: new RunItem(),
+  };
+  utils.dark = Object.assign(utils.dark, {
+    push: utils.dark.method.toggle.push,
+  });
+
+  // 暴露到 window：页尾插件片段经裸标识符 utils 即可使用
+  window.utils = utils;
+
+  // 补跑解析期注册的插件队列
+  if (window.stellar && typeof window.stellar._flushPlugins === 'function') {
+    window.stellar._flushPlugins();
+  }
+})();
