@@ -1,0 +1,1 @@
+window.__SITE_STATS__ = {"posts":15,"categories":3,"tags":30};
