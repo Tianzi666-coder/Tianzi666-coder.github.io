@@ -31,13 +31,13 @@
 <meta property="article:modified_time" content="2026-10-20T10:52:29.226Z">
 <meta property="article:author" content="Tianzi666-coder">
 <meta property="article:tag" content="Java">
-<meta property="article:tag" content="集合">
 <meta property="article:tag" content="并发">
+<meta property="article:tag" content="集合">
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:image" content="https://tianzi666-coder.github.io/img/covers/concurrenthashmap-notes.svg"><meta name="twitter:title" content="ConcurrentHashMap 为什么线程安全">
   
   
-  <meta name="keywords" content="Java,集合,并发">
+  <meta name="keywords" content="Java,并发,集合">
 
   <!-- feed -->
   
@@ -50,7 +50,7 @@
 
   
 
-  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-04-25T21:30:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-04-25T21:30:00+08:00","description":"一句话JDK 8 的 ConcurrentHashMap &#x3D; CAS + synchronized 锁单个桶，锁粒度细到”数组里的一个节点”，所以并发度远高于 Hashtable（锁整个表）。","headline":"ConcurrentHashMap 为什么线程安全","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/04/25/concurrenthashmap-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/04/25/concurrenthashmap-notes/","keywords":"Java, 集合, 并发","thumbnailUrl":"/img/covers/concurrenthashmap-notes.svg","image":["/img/covers/concurrenthashmap-notes.svg"]}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"BlogPosting","author":{"@type":"Person","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4"},"dateCreated":"2026-04-25T21:30:00+08:00","dateModified":"2026-10-20T18:52:29+08:00","datePublished":"2026-04-25T21:30:00+08:00","description":"一句话JDK 8 的 ConcurrentHashMap &#x3D; CAS + synchronized 锁单个桶，锁粒度细到”数组里的一个节点”，所以并发度远高于 Hashtable（锁整个表）。","headline":"ConcurrentHashMap 为什么线程安全","mainEntityOfPage":{"@type":"WebPage","@id":"https://tianzi666-coder.github.io/2026/04/25/concurrenthashmap-notes/"},"publisher":{"@type":"Organization","name":"Tianzi666-coder","sameAs":[],"image":"https://avatars.githubusercontent.com/u/344862469?v=4","logo":{"@type":"ImageObject","url":"https://avatars.githubusercontent.com/u/344862469?v=4"}},"url":"https://tianzi666-coder.github.io/2026/04/25/concurrenthashmap-notes/","keywords":"Java, 并发, 集合","thumbnailUrl":"/img/covers/concurrenthashmap-notes.svg","image":["/img/covers/concurrenthashmap-notes.svg"]}</script>
   
 
   <!-- icons.yml 驱动的 CSS 装饰图标 -->
@@ -65,7 +65,7 @@
 }</style>
   
 </head>
-<body><div class="sitebg"><div class="siteblur"></div></div><div id="l_cover"></div><div class="l_body content" id="start" layout="post" type="tech" ><aside class="l_left" data-ui-surface="glass"><div class="sidebg"></div><div class="leftbar-container">
+<body><div class="sitebg"><div class="siteblur"></div></div><div id="l_cover"></div><div class="l_body content" id="start" layout="post" type="tech" ><aside class="l_left leftbar-card" data-ui-surface="card"><div class="sidebg"></div><div class="leftbar-container">
 
 
 
@@ -338,7 +338,7 @@
 </ul>
 </article>
 
-<div class="article-tags slide-up"><a class="tag" href="/tags/Java/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>Java</a><a class="tag" href="/tags/%E9%9B%86%E5%90%88/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>集合</a><a class="tag" href="/tags/%E5%B9%B6%E5%8F%91/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>并发</a></div>
+<div class="article-tags slide-up"><a class="tag" href="/tags/Java/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>Java</a><a class="tag" href="/tags/%E5%B9%B6%E5%8F%91/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>并发</a><a class="tag" href="/tags/%E9%9B%86%E5%90%88/"><svg class="icon" data-icon="default:hashtag" aria-hidden="true"></svg>集合</a></div>
 
 <div class="article-footer slide-up">
     <section id="license">

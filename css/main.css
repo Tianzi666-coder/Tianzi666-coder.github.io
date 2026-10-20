@@ -2688,7 +2688,7 @@ div.toast.show {
 }
 @supports not (corner-shape: superellipse(1)) {
   .article.banner {
-    clip-path: inset(0 round 24px);
+    clip-path: inset(0 round 16px);
   }
 }
 .article.banner .bg+.content {
@@ -2821,7 +2821,7 @@ div.toast.show {
 @supports not (corner-shape: superellipse(1)) {
   .article.banner .bg+.content:before,
   .article.banner .bg+.content:after {
-    clip-path: inset(0 round 24px);
+    clip-path: inset(0 round 16px);
   }
 }
 .article.banner .bg+.content .top,
@@ -2843,7 +2843,7 @@ div.toast.show {
   margin: 2rem 1rem 1rem;
   padding: 1rem;
   background: var(--block);
-  border-radius: 24px;
+  border-radius: 16px;
   border: 1px solid var(--block-border);
   font-size: calc(var(--fs-content-base) - 1px);
   line-height: 1.6;
@@ -4144,7 +4144,7 @@ article.md-text.content+.related-wrap {
   height: 220px;
 }
 .banner.top {
-  border-radius: 24px;
+  border-radius: 16px;
 }
 @media screen and (max-width: 667px) {
   .banner {
@@ -8639,14 +8639,14 @@ details.toc[open] >div.body section .header+.doc_tree {
 .l_left {
   margin: var(--gap-page);
   max-height: calc(100vh - var(--gap-page) * 2);
-  border-radius: 24px;
+  border-radius: 16px;
 }
 .l_left .header {
   margin: var(--gap-base) var(--gap-base) 0;
 }
 .l_right {
   margin: var(--gap-page) 0;
-  border-radius: 24px;
+  border-radius: 16px;
 }
 @media screen and (min-width: 2048px) {
   .l_left {
@@ -8685,7 +8685,7 @@ details.toc[open] >div.body section .header+.doc_tree {
   bottom: var(--inset);
   left: var(--inset);
   right: var(--inset);
-  border-radius: 24px;
+  border-radius: 16px;
   --saturate: 400%;
   --blur-px: 100px;
   --background-opacity: 1;
@@ -8710,7 +8710,7 @@ details.toc[open] >div.body section .header+.doc_tree {
   flex-direction: column;
   word-break: break-all;
   text-align: justify;
-  border-radius: 24px;
+  border-radius: 16px;
   overflow: hidden;
 }
 .l_left .leftbar-container > .search-wrapper[searching='true'] ~ .widgets {
@@ -8733,7 +8733,7 @@ details.toc[open] >div.body section .header+.doc_tree {
   bottom: 0;
   left: 0;
   right: 0;
-  border-radius: 24px;
+  border-radius: 16px;
 }
 @media screen and (min-width: 667px) {
   .l_left .leftbar-container:before {
@@ -9986,7 +9986,7 @@ details.toc[open] >div.body section .header+.doc_tree {
   width: 100%;
   margin: 0 auto;
   padding: var(--gap-base);
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--card);
   box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
 }
@@ -10269,12 +10269,12 @@ details.toc[open] >div.body section .header+.doc_tree {
 .post-list .post-card-wrap {
   display: block;
   margin: 1rem 0;
-  border-radius: 24px;
+  border-radius: 16px;
   box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
 }
 .post-list .post-card {
   display: block;
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--card);
   background-image: var(--cover-url);
   background-size: cover;
@@ -10291,7 +10291,7 @@ details.toc[open] >div.body section .header+.doc_tree {
 }
 @supports not (corner-shape: superellipse(1)) {
   .post-list .post-card {
-    clip-path: inset(0 round 24px);
+    clip-path: inset(0 round 16px);
   }
 }
 .post-list .post-card:hover {
@@ -10570,7 +10570,7 @@ details.toc[open] >div.body section .header+.doc_tree {
   flex: none;
   width: 100%;
   aspect-ratio: 2/1;
-  border-radius: 24px;
+  border-radius: 16px;
   overflow: hidden;
   background-image: var(--cover-url);
   background-size: cover;
@@ -10579,7 +10579,7 @@ details.toc[open] >div.body section .header+.doc_tree {
 }
 @supports not (corner-shape: superellipse(1)) {
   .post-list.topic .post-card.topic article .cover {
-    clip-path: inset(0 round 24px);
+    clip-path: inset(0 round 16px);
   }
 }
 .post-list.topic .post-card.topic article .cover img {
@@ -10913,7 +10913,7 @@ table a:not([class]):has(img):hover {
 .pin-slider {
   position: relative;
   margin: 0 1rem var(--gap-base);
-  border-radius: 24px;
+  border-radius: 16px;
   overflow: hidden;
   box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
   background-image: var(--pin-cover-url);
@@ -11336,7 +11336,7 @@ table a:not([class]):has(img):hover {
 .post-list.wiki .post-card-wrap {
   width: 100%;
   margin: 0;
-  border-radius: 24px;
+  border-radius: 16px;
   box-shadow: 0 1px 2px 0px rgba(0,0,0,0.1);
 }
 @media screen and (max-width: 500px) {
@@ -11349,7 +11349,7 @@ table a:not([class]):has(img):hover {
   position: relative;
   z-index: 0;
   overflow: hidden;
-  border-radius: 24px;
+  border-radius: 16px;
   background: var(--card);
   --wiki-img-br: 100%;
   --wiki-img-sat: 100%;
@@ -11362,7 +11362,7 @@ table a:not([class]):has(img):hover {
 }
 @supports not (corner-shape: superellipse(1)) {
   .post-list.wiki .wiki-card {
-    clip-path: inset(0 round 24px);
+    clip-path: inset(0 round 16px);
   }
 }
 .post-list.wiki .wiki-card:after {
