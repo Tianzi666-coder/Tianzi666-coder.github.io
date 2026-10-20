@@ -1,0 +1,72 @@
+/* ==========================================================
+   田子誉的博客 · 自定义样式
+   引入方式：_config.anzhiyu.yml 里 inject.head 已引用 /css/custom.css
+   改完执行：hexo clean && hexo s
+   ========================================================== */
+
+:root {
+  --my-radius: 16px;      /* 卡片圆角 */
+  --my-accent: #49B202;   /* 强调色，改这里要和 theme_color.main 保持一致 */
+}
+
+/* ---------- 全局 ---------- */
+::selection {
+  background: var(--my-accent) !important;
+  color: #fff !important;
+}
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(140,140,140,.45); border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(140,140,140,.75); }
+
+/* ---------- 首页文章卡片 ---------- */
+#recent-posts > .recent-post-item {
+  border-radius: var(--my-radius) !important;
+  overflow: hidden;
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+#recent-posts > .recent-post-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 30px rgba(0,0,0,.14);
+}
+#recent-posts > .recent-post-item .article-title {
+  font-size: 20px !important;
+  font-weight: 700 !important;
+}
+
+/* ---------- 顶部大图标题 ---------- */
+#page-header #site-title {
+  font-size: 34px !important;
+  letter-spacing: 1px;
+  text-shadow: 0 3px 12px rgba(0,0,0,.35);
+}
+#page-header #site-subtitle {
+  font-size: 15px !important;
+  opacity: .9;
+}
+
+/* ---------- 侧边栏卡片 ---------- */
+#aside-content .card-widget {
+  border-radius: var(--my-radius) !important;
+}
+
+/* ---------- 正文阅读体验 ---------- */
+#article-container {
+  font-size: 16px !important;
+  line-height: 1.9 !important;
+}
+#article-container p { margin-bottom: 1.1em; }
+#article-container img:not(.emoji) { border-radius: 10px; }
+#article-container h2 {
+  border-left: 4px solid var(--my-accent);
+  padding-left: 12px;
+}
+
+/* ---------- 代码块 ---------- */
+#article-container figure.highlight,
+#article-container pre {
+  border-radius: 10px !important;
+}
+
+/* ---------- 页脚 ---------- */
+#footer { padding-top: 10px; }

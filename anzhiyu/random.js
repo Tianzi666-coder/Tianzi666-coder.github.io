@@ -1,0 +1,3 @@
+var posts=["2026/10/21/gateway-jwt-auth-notes/","2026/10/20/java-hashmap-notes/","2026/10/21/jvm-memory-gc-notes/","2026/10/21/mysql-index-notes/","2026/10/21/redis-cache-problems-notes/","2026/10/20/spring-cloud-openfeign-notes/","2026/10/21/java-threadpool-notes/","2026/10/21/spring-transaction-notes/","2026/10/20/note-module-design-notes/"];function toRandomPost(){
+    pjax.loadUrl('/'+posts[Math.floor(Math.random() * posts.length)]);
+  };
